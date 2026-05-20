@@ -1,3 +1,7 @@
+---
+source: video_link
+---
+
 ## 1. Video Summary
 
 **Technical Detail:** 
@@ -13,6 +17,7 @@
 *   **Technical Summary:** Lower your body slightly and use ground force to push up just as you are about to swing. This upward thrust creates greater acceleration into the shot.
 *   **Key coaching cue:** "start pushing down on the ground to give me the ground force to use to come up".
 *   **Visual focus:** Watch the knees bend slightly to load, followed by an immediate upward push through the legs right before contact.
+*   **timestamp:** ...
 
 **Length of Swing**
 *   **Technical Summary:** Expand the swing path to give your racket head enough space to build up speed. A short, abbreviated motion drastically limits your potential power.
