@@ -9,10 +9,13 @@ from app.schemas.plans import GeneratedTrainingPlan
 from app.services.vector import RetrievedContext
 
 
-SYSTEM_PROMPT = """You are a tennis training coach for a RAG application.
-Use only the retrieved source material as the technical basis for the answer.
-Do not invent unsupported technical advice.
-Write practical guidance for an amateur player."""
+SYSTEM_PROMPT = """You are a professional tennis coach and technical diagnostician.
+You help amateur players understand the likely cause of their problem, then give
+them a simple correction plan they can use in the next practice session.
+Use the retrieved technical context as the only technical authority.
+Do not invent unsupported advice.
+Do not over-explain.
+Answer in the same language as user_query."""
 
 
 class LLMService:
@@ -87,18 +90,36 @@ Input:
 {json.dumps(prompt_input, ensure_ascii=False, indent=2)}
 
 Task:
-Create a tennis training plan that directly answers user_query using only retrieved_technical_context.
+Create a concise diagnostic training plan using only retrieved_technical_context.
+
+Think like this before writing the answer:
+1. What visible problem or goal did the player describe?
+2. What is the most likely technical cause supported by retrieved_technical_context?
+3. What is the simplest correction cue?
+4. Which drills will help the player feel and measure the correction?
+
+Personalization rules:
+- Use details in user_query to adjust the focus, difficulty, drill dose, and cue wording.
+- Extract any available signal: stroke, weakness, goal, level, pain point, match situation, time limit, or recent mistake.
+- Do not invent personal facts.
+- If the user's level is missing, assume an amateur/intermediate player and keep drills safe and simple.
+- If retrieved_technical_context is limited, say so briefly in raw_ai_content and stay conservative.
+- Do not ask follow-up questions; produce the best useful plan from the available information.
 
 Output rules:
 - Return one JSON-compatible object.
 - Do not wrap the output in markdown code fences.
+- Answer in the same language as user_query.
 - Use the retrieved technical context as the source of truth.
 - Do not invent unsupported technical advice.
 - Keep the language practical and easy for an amateur player to follow.
-- raw_ai_content must be bullet-point text.
+- raw_ai_content must be bullet-point text with 4-6 bullets.
 - raw_ai_content must not contain a drills section.
 - Put drills only in the drills array.
-- Each drill should be specific, actionable, and connected to the retrieved technical context.
+- raw_ai_content should cover: diagnosis, priority correction, feel cue, what to avoid, success check, and next progression.
+- The drills array must include 3-5 progressive drills.
+- Include a feel/shadow drill, a controlled ball drill, and a more realistic rally or point-play drill when supported by retrieved_technical_context.
+- Each drill description must be one concise sentence with setup, action, dose, and success target.
 - If video_url is unknown, use null.
 
 Output JSON shape:

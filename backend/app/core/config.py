@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     )
     retrieval_k: int = Field(default=4, validation_alias="RETRIEVAL_K")
     retrieval_fetch_k: int = Field(default=12, validation_alias="RETRIEVAL_FETCH_K")
+    conversation_max_turns: int = Field(
+        default=4, validation_alias="CONVERSATION_MAX_TURNS"
+    )
+    reflection_light_retrieval_k: int = Field(
+        default=3, validation_alias="REFLECTION_LIGHT_RETRIEVAL_K"
+    )
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",
