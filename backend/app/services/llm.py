@@ -114,13 +114,17 @@ Output rules:
 - Do not invent unsupported technical advice.
 - Keep the language practical and easy for an amateur player to follow.
 - raw_ai_content must be bullet-point text with 4-6 bullets.
-- raw_ai_content must not contain a drills section.
-- Put drills only in the drills array.
+- Each bullet must be ONE sentence, ≤25 words, no filler words ("really", "essentially", "basically", "in order to").
+- raw_ai_content must not contain a drills section. Put drills only in the drills array.
 - raw_ai_content should cover: diagnosis, priority correction, feel cue, what to avoid, success check, and next progression.
 - The drills array must include 3-5 progressive drills.
 - Include a feel/shadow drill, a controlled ball drill, and a more realistic rally or point-play drill when supported by retrieved_technical_context.
-- Each drill description must be one concise sentence with setup, action, dose, and success target.
+- Each drill description must be ONE sentence, ≤30 words, covering setup, action, dose, and success target.
 - If video_url is unknown, use null.
+
+Style anchor (match this tone and length):
+- Example bullet: "Diagnosis: your forehand sails long because contact is flat and the racket finishes low."
+- Example drill: "Stand 4 feet from a wall; brush up low-to-high with self-fed balls for 30 reps; success: 8/10 land inside the service line."
 
 Output JSON shape:
 {{

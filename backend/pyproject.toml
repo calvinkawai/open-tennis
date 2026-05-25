@@ -17,6 +17,7 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "sqlmodel>=0.0.38",
     "unstructured>=0.22.28",
+    "youtube-transcript-api>=0.6",
 ]
 
 [build-system]
