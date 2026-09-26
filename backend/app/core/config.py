@@ -37,14 +37,41 @@ class Settings(BaseSettings):
     reflection_light_retrieval_k: int = Field(
         default=3, validation_alias="REFLECTION_LIGHT_RETRIEVAL_K"
     )
+    llm_timeout_seconds: float = Field(
+        default=30, gt=0, le=120, validation_alias="LLM_TIMEOUT_SECONDS"
+    )
+    llm_max_retries: int = Field(
+        default=1, ge=0, le=3, validation_alias="LLM_MAX_RETRIES"
+    )
+    llm_max_output_tokens: int = Field(
+        default=4096, ge=256, le=16384, validation_alias="LLM_MAX_OUTPUT_TOKENS"
+    )
+    agent_enabled: bool = Field(default=False, validation_alias="AGENT_ENABLED")
+    allow_personal_model_context: bool = Field(
+        default=False, validation_alias="ALLOW_PERSONAL_MODEL_CONTEXT"
+    )
+    agent_max_input_characters: int = Field(
+        default=50000, ge=2000, le=150000, validation_alias="AGENT_MAX_INPUT_CHARACTERS"
+    )
+    owner_username: str = Field(default="owner", min_length=1, validation_alias="OWNER_USERNAME")
+    owner_password: str | None = Field(default=None, validation_alias="OWNER_PASSWORD")
+    tutorial_path: Path = Field(default=BACKEND_DIR / "data" / "tutorial", validation_alias="TUTORIAL_PATH")
+    semantic_index_enabled: bool = Field(default=False, validation_alias="SEMANTIC_INDEX_ENABLED")
+    wiki_index_path: Path = Field(default=BACKEND_DIR / "data" / "wiki_index", validation_alias="WIKI_INDEX_PATH")
+    public_origin: str | None = Field(default=None, validation_alias="PUBLIC_ORIGIN")
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_DIR / ".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        populate_by_name=True,
+        allow_inf_nan=False,
     )
 
-    @field_validator("chroma_db_path", "sqlite_database_path", mode="after")
+    @field_validator(
+        "chroma_db_path", "sqlite_database_path",
+        "tutorial_path", "wiki_index_path", mode="after"
+    )
     @classmethod
     def resolve_backend_relative_path(cls, value: Path) -> Path:
         if value.is_absolute():

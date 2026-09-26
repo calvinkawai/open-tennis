@@ -38,5 +38,7 @@ class Drill(SQLModel, table=True):
     description: str
     video_url: Optional[str] = None  # Metadata for YouTube iframes
 
-    training_plan_id: int = Field(foreign_key="trainingplan.id")
+    training_plan_id: Optional[int] = Field(
+        default=None, foreign_key="trainingplan.id", nullable=False
+    )
     training_plan: TrainingPlan = Relationship(back_populates="drills")

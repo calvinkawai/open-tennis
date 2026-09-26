@@ -1,9 +1,13 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
-from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import InstrumentedAttribute, selectinload
 from sqlmodel import Session, select
 
-from app.models.models import TrainingPlan
+from app.models.models import Drill, TrainingPlan
+
+# SQLModel types instance relationships as lists; class access is an ORM descriptor.
+PLAN_DRILLS = cast(InstrumentedAttribute[list[Drill]], TrainingPlan.drills)
 
 
 def get_plan(db: Session, plan_id: int) -> Optional[TrainingPlan]:
@@ -11,7 +15,7 @@ def get_plan(db: Session, plan_id: int) -> Optional[TrainingPlan]:
     statement = (
         select(TrainingPlan)
         .where(TrainingPlan.id == plan_id)
-        .options(selectinload(TrainingPlan.drills))
+        .options(selectinload(PLAN_DRILLS))
     )
     return db.exec(statement).first()
 
@@ -20,7 +24,7 @@ def get_plans(db: Session, skip: int = 0, limit: int = 100) -> List[TrainingPlan
     """Retrieve all plans for a specific user with pagination."""
     statement = (
         select(TrainingPlan)
-        .options(selectinload(TrainingPlan.drills))
+        .options(selectinload(PLAN_DRILLS))
         .offset(skip)
         .limit(limit)
     )
@@ -30,7 +34,11 @@ def get_plans(db: Session, skip: int = 0, limit: int = 100) -> List[TrainingPlan
 def create_plan(db: Session, plan_obj: TrainingPlan) -> TrainingPlan:
     """Save a new LLM-generated plan to the database."""
     db.add(plan_obj)
-    db.commit()
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise
     db.refresh(plan_obj)
     return plan_obj
 

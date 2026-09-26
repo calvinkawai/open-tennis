@@ -219,3 +219,11 @@ __marimo__/
 
 # Backend script output
 backend/tmp/
+
+# Private application data and local deployment credentials
+.local/
+backend/data/wiki_index/
+backend/data/*.db-wal
+backend/data/*.db-shm
+backend/data/*.backup.db
+deploy/.env

@@ -128,6 +128,9 @@ def build_gemini_invoker(settings: Settings | None = None) -> Invoker:
         model=settings.gemini_model,
         google_api_key=settings.google_genai_api_key,
         temperature=0.3,
+        timeout=settings.llm_timeout_seconds,
+        max_retries=settings.llm_max_retries,
+        max_output_tokens=settings.llm_max_output_tokens,
     )
 
     def _invoke(system_prompt: str, user_prompt: str) -> str:

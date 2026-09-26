@@ -2,7 +2,6 @@ from dataclasses import dataclass
 
 from sqlmodel import Session
 
-from app.crud import drill as drill_crud
 from app.crud import training_plan as training_plan_crud
 from app.models.models import Drill, TrainingPlan
 from app.schemas.plans import GeneratedTrainingPlan
@@ -43,20 +42,18 @@ class PlanGenerationService:
                 title=generated_plan.title,
                 focus_area=generated_plan.focus_area,
                 raw_ai_content=generated_plan.raw_ai_content,
+                drills=[
+                    Drill(
+                        name=drill.name,
+                        description=drill.description,
+                        video_url=drill.video_url,
+                    )
+                    for drill in generated_plan.drills
+                ],
             ),
         )
 
-        for generated_drill in generated_plan.drills:
-            drill_crud.create_drill(
-                db,
-                Drill(
-                    name=generated_drill.name,
-                    description=generated_drill.description,
-                    video_url=generated_drill.video_url,
-                    training_plan_id=plan.id,
-                ),
-            )
-
+        assert plan.id is not None
         saved_plan = training_plan_crud.get_plan(db, plan.id)
         if saved_plan is None:
             raise RuntimeError(f"Created plan {plan.id} could not be reloaded.")

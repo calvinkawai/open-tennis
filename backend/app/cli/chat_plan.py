@@ -24,6 +24,11 @@ def _print_question(turn: TurnResult) -> None:
 
 
 def _print_plan(turn: TurnResult) -> None:
+    if turn.warning_code:
+        print(
+            f"Warning: {turn.warning_code}; using the available context.",
+            file=sys.stderr,
+        )
     plan = turn.plan
     if plan is None:
         print("(error: plan_ready turn returned no plan)", file=sys.stderr)

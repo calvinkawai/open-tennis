@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from app.services.rendering import render_training_plan
+from app.schemas.knowledge import Evidence, EvidenceSection, StrictModel
 
 
 class PlanCreate(BaseModel):
@@ -43,6 +44,9 @@ class TrainingPlanRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     drills: list[DrillRead] = Field(default_factory=list)
+    sections: list[EvidenceSection] = Field(default_factory=list)
+    citations: list[Evidence] = Field(default_factory=list)
+    wiki_page_id: str | None = None
 
     @computed_field
     @property
@@ -53,3 +57,32 @@ class TrainingPlanRead(BaseModel):
             raw_ai_content=self.raw_ai_content,
             drills=self.drills,
         )
+
+
+class GroundedPlanDraft(GeneratedTrainingPlan):
+    model_config = ConfigDict(extra="forbid")
+    sections: list[EvidenceSection] = Field(min_length=1, max_length=16)
+
+
+class PlanPreviewRead(GroundedPlanDraft):
+    preview_id: str
+    citations: list[Evidence]
+    warning: str | None = None
+    run_id: str
+
+
+class AdoptPlan(StrictModel):
+    preview_id: str
+    edited_content: str | None = Field(default=None, max_length=20000)
+
+
+class DrillEdit(StrictModel):
+    id: int = Field(gt=0)
+    name: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None, min_length=1, max_length=2000)
+
+
+class PlanEdit(StrictModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    edited_content: str | None = Field(default=None, max_length=20000)
+    drills: list[DrillEdit] | None = Field(default=None, max_length=5)

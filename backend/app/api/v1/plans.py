@@ -3,10 +3,10 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
-from app.crud import training_plan as training_plan_crud
 from app.db.session import get_session
 from app.schemas.plans import PlanCreate, TrainingPlanRead
 from app.services.generation import PlanGenerationService
+from app.api.v1.workspace import Workspace
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -27,34 +27,33 @@ def create_training_plan(
     generation_service: PlanGenerationService = Depends(get_plan_generation_service),
 ) -> TrainingPlanRead:
     try:
-        return generation_service.create_plan(db, payload.query)
+        return TrainingPlanRead.model_validate(
+            generation_service.create_plan(db, payload.query)
+        )
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The plan request or model output failed validation.",
+        ) from exc
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
-        )
+            detail="Plan generation is unavailable; check server configuration.",
+        ) from exc
 
 
 @router.get("", response_model=list[TrainingPlanRead])
 def list_training_plans(
+    workspace: Workspace,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=100),
-    db: Session = Depends(get_session),
 ) -> list[TrainingPlanRead]:
-    return training_plan_crud.get_plans(db, skip=skip, limit=limit)
+    return workspace.list_plans(skip, limit)
 
 
 @router.get("/{plan_id}", response_model=TrainingPlanRead)
 def get_training_plan(
     plan_id: int,
-    db: Session = Depends(get_session),
+    workspace: Workspace,
 ) -> TrainingPlanRead:
-    plan = training_plan_crud.get_plan(db, plan_id)
-    if plan is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Training plan {plan_id} was not found.",
-        )
-    return plan
+    return workspace.get_plan(plan_id)

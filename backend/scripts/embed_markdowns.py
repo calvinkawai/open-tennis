@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from pydantic import SecretStr
 
 from app.core.config import BACKEND_DIR, get_settings
 
@@ -67,7 +68,7 @@ def store_tutorial_chunks(
     settings = get_settings()
     embeddings = GoogleGenerativeAIEmbeddings(
         model=settings.embedding_model,
-        google_api_key=settings.google_genai_api_key,
+        api_key=SecretStr(settings.google_genai_api_key),
     )
     vector_db = Chroma(
         collection_name=settings.chroma_collection_name,
@@ -192,7 +193,7 @@ def _remove_cartoon_card(markdown: str) -> str:
 
 def _extract_technical_detail(markdown: str) -> str:
     match = re.search(
-        r"(?is)\*\*Technical Detail:\*\*\s*(.*?)(?=^##\s*2\.\s*Segments\b|\Z)",
+        r"(?ims)\*\*Technical Detail:\*\*\s*(.*?)(?=^##\s*2\.\s*Segments\b|\Z)",
         markdown,
     )
     if match:
@@ -214,7 +215,8 @@ def _extract_segments(markdown: str) -> list[tuple[str, str]]:
 
     segment_section = section_match.group(1).strip()
     segment_matches = re.finditer(
-        r"(?ms)^\*\*([^*\n]+)\*\*\s*\n(.*?)(?=^\*\*[^*\n]+\*\*\s*$|\Z)",
+        r"(?ms)^[ \t]*(?:[-*][ \t]+)?\*\*([^*\n]+)\*\*[ \t]*\n"
+        r"(.*?)(?=^[ \t]*(?:[-*][ \t]+)?\*\*[^*\n]+\*\*[ \t]*$|\Z)",
         segment_section,
     )
     return [
@@ -226,7 +228,8 @@ def _extract_segments(markdown: str) -> list[tuple[str, str]]:
 
 def _extract_labeled_value(text: str, label: str) -> str:
     match = re.search(
-        rf"(?im)^\s*[-*]\s*\*\*{re.escape(label)}:\*\*\s*(.+)$",
+        rf"(?im)^[ \t]*[-*][ \t]+(?:\*\*)?{re.escape(label)}"
+        rf"(?:\*\*)?:[ \t]*(?:\*\*)?[ \t]*(.+)$",
         text,
     )
     return match.group(1).strip() if match else ""
@@ -234,7 +237,8 @@ def _extract_labeled_value(text: str, label: str) -> str:
 
 def _remove_segment_labels(text: str) -> str:
     return re.sub(
-        r"(?im)^\s*[-*]\s*\*\*(?:Key coaching cue|Visual focus):\*\*.*$",
+        r"(?im)^[ \t]*[-*][ \t]+(?:\*\*)?(?:Key coaching cue|Visual focus)"
+        r"(?:\*\*)?:[ \t]*(?:\*\*)?.*$",
         "",
         text,
     ).strip()

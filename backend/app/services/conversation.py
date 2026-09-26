@@ -27,6 +27,7 @@ class TurnResult:
     plan: Optional[GeneratedTrainingPlan] = None
     question_number: Optional[int] = None
     max_questions: Optional[int] = None
+    warning_code: str | None = None
 
 
 class ConversationService:
@@ -105,7 +106,9 @@ class ConversationService:
         full_contexts = list(self.vector_service.search(enriched_query))
         plan = self.llm_service.generate_training_plan(enriched_query, full_contexts)
         new_state = replace(state, status="completed")
-        return new_state, TurnResult(status="plan_ready", plan=plan)
+        return new_state, TurnResult(
+            status="plan_ready", plan=plan, warning_code=step.warning_code
+        )
 
     @staticmethod
     def _build_enriched_query(state: ConversationState) -> str:

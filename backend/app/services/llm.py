@@ -32,6 +32,9 @@ class LLMService:
                 model=self.settings.gemini_model,
                 google_api_key=self.settings.google_genai_api_key,
                 temperature=0.3,
+                timeout=self.settings.llm_timeout_seconds,
+                max_retries=self.settings.llm_max_retries,
+                max_output_tokens=self.settings.llm_max_output_tokens,
             )
         return self._model
 

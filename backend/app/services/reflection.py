@@ -1,3 +1,4 @@
+import logging
 import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -5,10 +6,14 @@ from typing import Literal
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
+from google.genai.errors import APIError
+from httpx import HTTPError
 from pydantic import BaseModel, Field
 
 from app.core.config import Settings, get_settings
 from app.services.vector import RetrievedContext
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -22,6 +27,7 @@ class ReflectionStep(BaseModel):
     biggest_gap: str = Field(min_length=3)
     action: Literal["ask", "generate"]
     question: str | None = None
+    warning_code: str | None = Field(default=None, exclude=True)
 
 
 # Low-level boundary: production wires this to Gemini.with_structured_output.
@@ -81,6 +87,7 @@ def _fallback_generate(reason: str) -> ReflectionStep:
         biggest_gap=reason,
         action="generate",
         question=None,
+        warning_code="REFLECTION_UNAVAILABLE",
     )
 
 
@@ -194,9 +201,16 @@ class ReflectionService:
         return result
 
     def _safe_invoke(self, user_prompt: str) -> ReflectionStep | None:
+        if self._invoker is None:
+            raise RuntimeError("Reflection invoker is not configured.")
         try:
-            return self._invoker(SYSTEM_PROMPT, user_prompt)
-        except Exception:
+            return self._invoker(SYSTEM_PROMPT, user_prompt).model_copy(
+                update={"warning_code": None}
+            )
+        except (APIError, HTTPError, ValueError, RuntimeError, TimeoutError) as exc:
+            logger.warning(
+                "reflection_unavailable", extra={"error_type": type(exc).__name__}
+            )
             return None
 
     @staticmethod
@@ -216,6 +230,9 @@ def build_gemini_reflection_invoker(settings: Settings | None = None) -> Invoker
         model=settings.gemini_model,
         google_api_key=settings.google_genai_api_key,
         temperature=0.3,
+        timeout=settings.llm_timeout_seconds,
+        max_retries=settings.llm_max_retries,
+        max_output_tokens=settings.llm_max_output_tokens,
     )
     structured = model.with_structured_output(ReflectionStep)
 

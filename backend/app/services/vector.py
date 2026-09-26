@@ -7,6 +7,7 @@ from typing import Any
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from pydantic import SecretStr
 
 from app.core.config import Settings, get_settings
 
@@ -47,6 +48,20 @@ QUERY_EXPANSIONS = {
     "power": {"drive", "force", "rotation", "body", "legs"},
     "wrist": {"lag", "loose", "relaxed", "racket"},
     "topspin": {"low", "high", "brush", "windshield", "wiper"},
+}
+CHINESE_TECHNIQUE_TERMS = {
+    "正手": {"forehand"},
+    "反手": {"backhand"},
+    "发球": {"serve"},
+    "击球点": {"contact"},
+    "空间": {"space"},
+    "上旋": {"topspin"},
+    "下网": {"net"},
+    "力量": {"power"},
+    "准备": {"preparation", "ready"},
+    "转体": {"rotation"},
+    "手腕": {"wrist"},
+    "步法": {"footwork"},
 }
 
 
@@ -101,7 +116,7 @@ class VectorService:
 
         embeddings = GoogleGenerativeAIEmbeddings(
             model=self.settings.embedding_model,
-            google_api_key=self.settings.google_genai_api_key,
+            api_key=SecretStr(self.settings.google_genai_api_key),
         )
         return Chroma(
             collection_name=self.settings.chroma_collection_name,
@@ -131,10 +146,10 @@ class VectorService:
         contexts: list[RetrievedContext],
         final_k: int,
     ) -> list[RetrievedContext]:
-        query_tokens = _expand_query_tokens(_tokenize(query))
+        tokens = query_tokens(query)
         scored_contexts = [
             (
-                self._combined_score(context, query_tokens),
+                self._combined_score(context, tokens),
                 context,
             )
             for context in contexts
@@ -252,8 +267,18 @@ def _distance_to_similarity(distance: float | None) -> float:
     return 1.0 / (1.0 + max(distance, 0.0))
 
 
+def query_tokens(text: str) -> set[str]:
+    tokens = _expand_query_tokens(_tokenize(text))
+    for phrase, translated in CHINESE_TECHNIQUE_TERMS.items():
+        if phrase in text:
+            tokens.update(translated)
+    return tokens
+
+
 def _tokenize(text: str) -> set[str]:
     tokens: set[str] = set()
+    for phrase in re.findall(r"[\u3400-\u9fff]+", text):
+        tokens.update(phrase[index:index + 2] for index in range(len(phrase) - 1))
     for token in re.findall(r"[a-z0-9]+", text.lower()):
         if len(token) < 3 or token in STOPWORDS:
             continue

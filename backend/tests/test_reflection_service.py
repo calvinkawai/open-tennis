@@ -162,6 +162,24 @@ def test_invoker_exception_falls_back_to_generate():
     assert result.question is None
 
 
+def test_reflection_failure_is_visible_without_logging_private_input(caplog):
+    def unavailable(system_prompt, user_prompt):
+        raise RuntimeError("private-note-content-and-credentials")
+
+    service = ReflectionService(invoker=unavailable)
+    result = service.next_step(
+        history=[ConversationMessage(role="user", content="Private training note")],
+        light_contexts=[],
+        turn_count=0,
+        max_turns=4,
+    )
+
+    assert result.warning_code == "REFLECTION_UNAVAILABLE"
+    assert "reflection_unavailable" in caplog.text
+    assert "private-note-content-and-credentials" not in caplog.text
+    assert "Private training note" not in caplog.text
+
+
 def test_user_prompt_includes_history_light_contexts_and_budget():
     """The assembled user prompt must include the conversation transcript,
     light retrieved context, and a turn-budget line for the LLM."""
