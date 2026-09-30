@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="160" viewBox="0 0 640 160" role="img" aria-labelledby="title desc">
+  <title id="title">Open Tennis wordmark concept</title>
+  <desc id="desc">Original Open Tennis lettering paired with a green O/T symbol and gold ball path. Brand concept, not a production trademark asset.</desc>
+  <rect width="640" height="160" rx="16" fill="#f3f3e9"/>
+  <g transform="translate(30 24) scale(1.65)" fill="none">
+    <path d="M41 19A19 19 0 1 0 42 47" stroke="#4f6b50" stroke-width="7" stroke-linecap="square"/>
+    <path d="M29 12h23M41 12v22" stroke="#4f6b50" stroke-width="6"/>
+    <path d="M7 55Q23 30 52 22" stroke="#c4a34b" stroke-width="2.6" stroke-linecap="round"/>
+    <circle cx="54" cy="12" r="4.5" fill="#c4a34b"/>
+  </g>
+  <text x="155" y="101" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" font-size="65" font-weight="500" letter-spacing="-2" fill="#416348">open <tspan fill="#896c27">tennis</tspan></text>
+</svg>

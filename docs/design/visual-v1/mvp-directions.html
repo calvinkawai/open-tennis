@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Tennis / Court Margin — Web &amp; PWA Concepts</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root { --paper: #efeee7; --ink: #21372f; --muted: #66766a; --line: #d4d9cf; --green: #365f4d; --lime: #d9ed99; }
+    body { margin: 0; background: #dcded6; color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif; }
+    a { color: inherit; }
+    .gallery-head { max-width: 1500px; margin: 42px auto 24px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .gallery-head h1 { margin: 0 0 8px; font-size: 25px; font-weight: 550; letter-spacing: -.8px; }
+    .gallery-head p { margin: 0; font-size: 13px; line-height: 1.8; color: #546254; }
+    .gallery-head nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .gallery-head a { padding: 10px 14px; border: 1px solid #b9c3b7; border-radius: 8px; text-decoration: none; font-size: 13px; }
+    .stage { position: relative; margin: 28px auto 46px; }
+    .board { width: 1920px; height: 1200px; position: absolute; top: 0; left: 0; overflow: hidden; transform-origin: top left; background: var(--paper); }
+    .board::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(#314b3a14 .8px, transparent .8px); background-size: 12px 12px; mask-image: linear-gradient(90deg, #000, transparent 35%, transparent 80%, #000); }
+    .sheet-head { position: absolute; left: 72px; right: 72px; top: 54px; }
+    .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 2.8px; display: flex; align-items: center; gap: 14px; }
+    .eyebrow::before { content: ""; width: 24px; height: 3px; background: #5b755c; }
+    .sheet-head h2 { margin: 24px 0 12px; font-size: 56px; line-height: 1.2; letter-spacing: -2px; font-weight: 500; }
+    .sheet-head p { font-size: 17px; color: var(--muted); margin: 0; letter-spacing: .3px; }
+    .sheet-index { position: absolute; right: 4px; top: -8px; font: italic 110px/1 Georgia, serif; color: #bac6b4; }
+    .sheet-badge { position: absolute; top: 94px; right: 0; border: 1px solid #b6c1ae; padding: 9px 14px; border-radius: 30px; font-size: 12px; letter-spacing: 1px; }
+    .device-label { position: absolute; top: 203px; display: flex; gap: 16px; align-items: center; font: 12px/1.3 Menlo, monospace; color: #627061; letter-spacing: 1.3px; }
+    .device-label span { font: 12px/1.3 -apple-system, "PingFang SC", sans-serif; color: #68776a; letter-spacing: 0; }
+    .web-label { left: 72px; }
+    .phone-label { left: 1454px; }
+    .web-frame { position: absolute; left: 72px; top: 237px; width: 1320px; height: 828px; border: 1px solid #b8c0b5; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 22px 40px -28px #17231960; }
+    .phone { position: absolute; left: 1454px; top: 229px; width: 374px; height: 846px; border: 8px solid #26322e; border-radius: 44px; overflow: hidden; background: #fcfcf8; box-shadow: 0 24px 44px -24px #152d2960; }
+    .phone::after { content: ""; position: absolute; left: 126px; bottom: 7px; width: 105px; height: 4px; border-radius: 4px; background: #53625c; opacity: .65; z-index: 5; }
+    .status-bar { height: 39px; padding: 14px 22px 0; display: flex; justify-content: space-between; font-size: 11px; font-weight: 650; }
+    .status-icons { display: flex; align-items: center; gap: 5px; }
+    .signal { display: flex; align-items: end; gap: 2px; height: 10px; }
+    .signal i { width: 2px; background: currentColor; height: 4px; }
+    .signal i:nth-child(2) { height: 6px; }
+    .signal i:nth-child(3) { height: 8px; }
+    .signal i:nth-child(4) { height: 10px; }
+    .battery { width: 17px; height: 8px; border: 1px solid currentColor; border-radius: 2px; padding: 1px; }
+    .battery::before { content: ""; display: block; width: 10px; height: 4px; border-radius: 1px; background: currentColor; }
+    .phone-toolbar { height: 48px; display: flex; align-items: center; justify-content: space-between; margin: 0 21px; font-size: 12px; }
+    .phone-toolbar .left { display: flex; align-items: center; gap: 12px; }
+    .phone-nav { position: absolute; bottom: 0; left: 0; right: 0; height: 71px; display: flex; justify-content: space-around; padding: 12px 15px 19px; background: #f7f8f2; border-top: 1px solid #dfe3d8; z-index: 3; }
+    .phone-nav > div { display: flex; flex-direction: column; gap: 5px; align-items: center; min-width: 68px; color: #778176; font-size: 10px; }
+    .phone-nav .selected { color: #284b3a; }
+    .icon { width: 18px; height: 18px; display: inline-block; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; vertical-align: middle; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 650; letter-spacing: -.25px; }
+    .brand-mark { width: 30px; height: 30px; color: #4f6b50; }
+    .brand-word { color: #416348; font-weight: 550; }
+    .brand-word span { color: #896c27; }
+    .dark .brand-mark { color: #b6caa2; }
+    .dark .brand-word { color: #d1dfc3; }
+    .dark .brand-word span { color: #dcc376; }
+    .app-top { height: 60px; border-bottom: 1px solid #dce2d7; display: flex; justify-content: space-between; align-items: center; padding: 0 22px; }
+    .app-top .middle { display: flex; align-items: center; gap: 28px; font-size: 13px; }
+    .top-active { font-weight: 600; position: relative; }
+    .top-active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -22px; height: 2px; background: currentColor; }
+    .app-top .right { display: flex; gap: 18px; align-items: center; font-size: 11px; }
+    .avatar { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #e2e9db; color: #425440; font: 12px Georgia, serif; }
+    .tiny { font: 10px/1.5 Menlo, monospace; letter-spacing: .7px; }
+    .quiet { color: #718171; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .stack { display: flex; flex-direction: column; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #d2dccc; color: #426049; padding: 5px 9px; border-radius: 5px; font-size: 10px; line-height: 1.4; white-space: nowrap; }
+    .pill .dot { width: 4px; height: 4px; background: currentColor; border-radius: 50%; }
+    .btn { display: flex; gap: 10px; align-items: center; justify-content: center; background: #335b47; color: #fff; border: 1px solid transparent; height: 42px; border-radius: 7px; font-size: 13px; font-weight: 550; white-space: nowrap; }
+    .btn.outline { background: transparent; color: #425a47; border-color: #cfd9c8; }
+    .field { border: 1px solid #d9e0d1; border-radius: 6px; background: #fff; padding: 11px 12px; color: #84907f; font-size: 12px; }
+    .side { padding: 25px 18px; position: relative; border-right: 1px solid #dde2d7; background: #f4f6ef; }
+    .side .section-label { margin: 28px 10px 13px; font-size: 10px; color: #7d8b79; letter-spacing: 1.8px; }
+    .side .nav-item { height: 38px; display: flex; justify-content: space-between; align-items: center; padding: 0 10px; font-size: 12px; color: #596e5c; margin-bottom: 3px; border-radius: 5px; }
+    .side .nav-item > span { display: flex; align-items: center; gap: 10px; }
+    .side .nav-item.active { color: #274633; background: #e1e9d9; font-weight: 550; }
+    .side .nav-item small { font: 10px Menlo, monospace; opacity: .7; }
+    .side-bottom { position: absolute; left: 26px; right: 22px; bottom: 26px; padding-top: 18px; border-top: 1px solid #dce2d4; font-size: 11px; line-height: 1.9; color: #82907c; }
+    .side-bottom strong { color: #4f664e; font-weight: 500; }
+    .sheet-footer { position: absolute; left: 72px; right: 92px; top: 1112px; display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; }
+    .flow { display: flex; align-items: center; gap: 20px; font-size: 14px; font-weight: 500; }
+    .flow .arrow { color: #96a18e; font-weight: 300; }
+    .sample-note { font-size: 11px; color: #6c7867; text-align: right; line-height: 1.8; }
+    .sample-note strong { font-weight: 500; color: #50634b; }
+    .dark { background: #192527; color: #e2e7dd; border-color: #243637; }
+    .dark .app-top { background: #152123; border-color: #344043; }
+    .dark .app-top .middle { color: #a7b5ae; }
+    .dark .top-active { color: #d9ed99; }
+    .dark .avatar { background: #3b4e42; color: #dbeaaf; }
+    .reader-layout { display: grid; grid-template-columns: 206px minmax(0, 1fr) 338px; height: 766px; }
+    .dark .side { background: #152123; border-color: #324142; padding-top: 23px; }
+    .dark .field { background: #1f2d2f; border-color: #344345; color: #899d97; }
+    .dark .side .section-label { color: #849b94; }
+    .dark .side .nav-item { color: #a6b9af; }
+    .dark .side .nav-item.active { background: #2b3f35; color: #ddecad; }
+    .dark .side-bottom { border-color: #344444; color: #94a899; }
+    .dark .side-bottom strong { color: #c5d5be; }
+    .reading { padding: 29px 40px; min-width: 0; position: relative; }
+    .reading .crumb { font-size: 11px; color: #93aaa0; letter-spacing: .2px; }
+    .reading h3 { font-size: 31px; font-weight: 500; line-height: 1.5; margin: 18px 0 8px; letter-spacing: -.6px; }
+    .reading .meta { display: flex; align-items: center; gap: 14px; color: #96aca1; font-size: 10px; }
+    .reading .topic-pills { display: flex; gap: 6px; }
+    .dark .pill { border-color: #465747; color: #c3d8a3; }
+    .reading p { font-size: 14px; line-height: 1.95; color: #c3cfc7; margin: 20px 0 0; }
+    .reading h4 { font-size: 16px; font-weight: 500; color: #e0e7d6; margin: 21px 0 0; }
+    .court-figure { margin-top: 24px; border: 1px solid #3b4d48; border-radius: 8px; padding: 12px; background: #1b2d2d; }
+    .court-figure svg { display: block; width: 100%; height: 178px; }
+    .highlight { color: #e6edc2; background: #d0de5c1d; box-shadow: 0 2px 0 #d6e38c73; padding: 2px 4px; }
+    .source-index { display: inline-grid; place-items: center; width: 20px; height: 19px; margin-left: 5px; border-radius: 3px; color: #d9ed99; background: #3c5039; font: 10px Menlo, monospace; vertical-align: 1px; }
+    .reading-bottom { position: absolute; left: 40px; right: 40px; bottom: 24px; padding-top: 18px; border-top: 1px solid #354643; display: flex; justify-content: space-between; color: #a1b89f; font-size: 11px; }
+    .evidence { background: #202e30; border-left: 1px solid #354447; padding: 25px 22px; position: relative; min-width: 0; }
+    .evidence-tabs { display: flex; gap: 24px; font-size: 12px; padding-bottom: 18px; border-bottom: 1px solid #3a4948; color: #8fa49a; }
+    .evidence-tabs .selected { color: #dcebac; }
+    .query { margin-top: 24px; padding: 13px 15px; background: #2b3c3d; border-radius: 8px 8px 2px 8px; font-size: 13px; line-height: 1.8; color: #d4dfd4; }
+    .support-label { font-size: 10px; color: #bed79b; display: flex; align-items: center; gap: 7px; margin: 23px 0 11px; }
+    .support-label::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #c9e39e; }
+    .evidence p { font-size: 13px; line-height: 1.85; color: #bdcec1; margin: 0; }
+    .citation { display: flex; align-items: center; gap: 11px; border: 1px solid #43554e; border-radius: 5px; margin-top: 10px; padding: 10px 12px; font-size: 11px; color: #bdcbb9; }
+    .citation .num { font: 10px Menlo, monospace; color: #d6e9b1; }
+    .citation .icon { margin-left: auto; width: 13px; height: 13px; color: #95af90; }
+    .model-note { background: #423b2b; border: 1px solid #6b5b38; border-radius: 6px; padding: 12px 13px; margin-top: 20px; }
+    .model-note .label { color: #e1c991; font-size: 10px; font-weight: 500; line-height: 1.6; }
+    .model-note p { color: #c9bd9d; font-size: 11px; margin: 7px 0 0; line-height: 1.8; }
+    .evidence .btn { margin-top: 21px; background: #d8eba6; color: #273e2e; }
+    .evidence .ask-field { position: absolute; bottom: 26px; left: 22px; right: 22px; height: 53px; border: 1px solid #566657; border-radius: 7px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 11px; color: #98ae9f; }
+    .ask-field .send { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 5px; background: #a8c68a; color: #203524; }
+    .reader-phone { background: #192527; color: #e2e7dd; }
+    .reader-phone .phone-toolbar { color: #a8bcae; border-bottom: 1px solid #374842; }
+    .phone-reading { padding: 23px 21px 0; }
+    .phone-reading .tiny { color: #a8c68a; }
+    .phone-reading h3 { margin: 13px 0 12px; font-size: 29px; line-height: 1.5; font-weight: 500; letter-spacing: -.7px; }
+    .phone-reading .small-meta { color: #91a49a; font-size: 10px; }
+    .phone-reading .court-figure { padding: 8px; margin-top: 22px; }
+    .phone-reading .court-figure svg { height: 138px; }
+    .phone-reading p { font-size: 13px; color: #c7d2c2; line-height: 1.9; margin: 20px 0 15px; }
+    .phone-reading .citation { font-size: 10px; padding: 10px; }
+    .reader-phone .supplement-row { position: absolute; bottom: 143px; left: 21px; right: 21px; border-top: 1px solid #5c573b; padding-top: 14px; color: #d0bd8a; font-size: 10px; display: flex; align-items: center; justify-content: space-between; }
+    .reader-phone .mobile-cta { position: absolute; bottom: 89px; left: 21px; right: 21px; background: #d8eba6; color: #253d2c; }
+    .reader-phone .phone-nav { background: #1d2b2b; border-color: #3b4d43; }
+    .reader-phone .phone-nav > div { color: #91a599; }
+    .reader-phone .phone-nav .selected { color: #d8eba6; }
+    .reader-phone::after { background: #b7cbb0; }
+    .practice-board { background: #f0ece2; --ink: #433c2a; --muted: #7c7967; }
+    .practice-board .sheet-index { color: #c8c2ae; }
+    .practice-board .eyebrow::before { background: #a27448; }
+    .practice-board .sheet-badge { border-color: #c8b99c; color: #806742; }
+    .practice-layout { display: grid; grid-template-columns: 194px minmax(0, 1fr) 308px; height: 766px; }
+    .practice-main { padding: 28px 34px; background: #fffdf7; }
+    .practice-main h3 { margin: 13px 0 10px; font-weight: 500; font-size: 30px; letter-spacing: -.8px; }
+    .practice-main .sub { color: #849079; font-size: 12px; }
+    .focus-banner { margin-top: 24px; background: #ecebd8; height: 141px; border-radius: 8px; padding: 21px 24px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #d9dfc7; }
+    .focus-banner h4 { font-size: 20px; font-weight: 500; margin: 10px 0; }
+    .focus-banner p { margin: 0; color: #6e775e; font-size: 12px; }
+    .focus-banner svg { width: 177px; height: 100px; flex: 0 0 auto; }
+    .drill-heading { margin: 25px 0 5px; display: flex; justify-content: space-between; font-size: 12px; align-items: center; }
+    .model-tag { color: #826037; font-size: 9px; border: 1px solid #d7c6a9; background: #faf2e4; border-radius: 4px; padding: 4px 6px; white-space: nowrap; }
+    .drill { display: flex; align-items: center; gap: 18px; border-bottom: 1px solid #e1e5d7; padding: 17px 0; min-height: 100px; }
+    .drill-num { font: italic 39px/1 Georgia, serif; color: #bdc6a4; min-width: 49px; }
+    .drill h5 { font-weight: 550; font-size: 15px; margin: 0 0 8px; }
+    .drill p { margin: 0; color: #758368; font-size: 12px; line-height: 1.65; }
+    .dose { margin-left: auto; font: 11px Menlo, monospace; color: #788463; white-space: nowrap; }
+    .practice-actions { margin-top: 24px; display: flex; justify-content: space-between; gap: 12px; }
+    .practice-actions .btn { padding: 0 23px; }
+    .practice-evidence { padding: 27px 23px; border-left: 1px solid #dfe4d5; background: #f6f7ef; position: relative; }
+    .practice-evidence h4 { font-size: 13px; font-weight: 550; margin: 0 0 22px; }
+    .source-tile { border: 1px solid #d5deca; background: #fffefa; border-radius: 6px; padding: 15px 13px; margin-bottom: 12px; }
+    .source-tile .index { font: 10px Menlo, monospace; color: #7c9466; }
+    .source-tile h5 { font-size: 13px; font-weight: 500; margin: 12px 0 8px; }
+    .source-tile p { font-size: 11px; color: #899478; margin: 0; }
+    .light-model { padding: 13px 13px; margin-top: 20px; border: 1px solid #d9c6a0; border-radius: 6px; background: #fcf4e6; }
+    .light-model .label { font-size: 10px; color: #8e692f; line-height: 1.6; font-weight: 550; }
+    .light-model p { margin: 9px 0 0; font-size: 11px; line-height: 1.8; color: #887249; }
+    .session-settings { margin-top: 30px; padding-top: 23px; border-top: 1px solid #dfe3d4; }
+    .session-settings .row { margin-top: 15px; font-size: 11px; color: #849173; }
+    .session-settings strong { color: #586b4f; font-weight: 500; }
+    .practice-evidence .bottom-note { position: absolute; bottom: 28px; left: 23px; right: 23px; font-size: 10px; color: #889676; line-height: 1.8; }
+    .practice-phone { background: #fbfbf2; }
+    .practice-phone .phone-toolbar { border-bottom: 1px solid #e0e6d6; color: #78896c; }
+    .phone-training { padding: 20px 22px 0; }
+    .phone-training .progress { display: flex; gap: 5px; margin: 17px 0 23px; }
+    .phone-training .progress i { height: 3px; background: #dde4d1; flex: 1; border-radius: 3px; }
+    .phone-training .progress i:first-child { background: #667e47; }
+    .phone-training .step { font: italic 76px/.95 Georgia, serif; color: #a9b887; }
+    .phone-training h3 { margin: 15px 0 12px; font-size: 27px; line-height: 1.5; font-weight: 500; letter-spacing: -.7px; }
+    .phone-training .training-art { height: 157px; margin: 18px 0; border-radius: 8px; border: 1px solid #d6dec5; background: #edf0df; padding: 17px; }
+    .phone-training .training-art svg { width: 100%; height: 100%; }
+    .phone-training .feel { font-size: 14px; line-height: 1.9; margin-top: 17px; color: #60714e; }
+    .phone-training .doses { display: flex; gap: 8px; margin-top: 17px; }
+    .phone-training .doses span { font-size: 11px; border: 1px solid #d9e0ce; padding: 7px 12px; border-radius: 5px; }
+    .phone-training .model-caption { color: #927246; font-size: 10px; margin-top: 13px; }
+    .practice-phone .mobile-cta { position: absolute; bottom: 89px; left: 22px; right: 22px; }
+    .journal-board { background: #edf0e8; }
+    .journal-board .sheet-index { color: #b6c6b5; }
+    .journal-layout { display: grid; grid-template-columns: 194px minmax(0, 1fr) 332px; height: 766px; }
+    .journal-main { padding: 29px 35px; background: #fdfef9; }
+    .journal-main h3 { margin: 12px 0 10px; font-size: 29px; font-weight: 500; letter-spacing: -.5px; }
+    .journal-main .sub { color: #87917e; font-size: 12px; }
+    .rhythm { margin-top: 25px; padding: 18px 21px; border: 1px solid #d9e2d2; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; background: #f2f6ec; }
+    .rhythm .number { font: italic 41px/1 Georgia, serif; color: #526a46; }
+    .rhythm small { display: block; font-size: 10px; margin-top: 7px; color: #7c8d70; }
+    .days { display: flex; gap: 15px; padding-left: 25px; border-left: 1px solid #d6dfce; }
+    .day { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 9px; color: #91a082; width: 25px; }
+    .day .ball { width: 15px; height: 15px; border-radius: 50%; background: #dce5d4; }
+    .day .ball.played { background: #728d57; border: 4px solid #b7cba2; width: 19px; height: 19px; margin-top: -2px; }
+    .timeline-label { margin: 27px 0 4px; color: #809170; font-size: 10px; letter-spacing: 1.2px; display: flex; justify-content: space-between; }
+    .entry { position: relative; padding: 20px 0 19px 27px; border-bottom: 1px solid #e4e8dc; }
+    .entry::before { content: ""; width: 6px; height: 6px; border: 1px solid #879c71; border-radius: 50%; position: absolute; left: 2px; top: 25px; background: #eff5e8; }
+    .entry .entry-meta { display: flex; gap: 13px; color: #8a987b; font-size: 10px; }
+    .entry h4 { margin: 12px 0 8px; font-weight: 500; font-size: 16px; }
+    .entry p { margin: 0; font-size: 12px; color: #7c8b70; line-height: 1.8; }
+    .entry .link { margin-top: 11px; font-size: 10px; color: #607a50; }
+    .journal-main .nudge { margin-top: 22px; display: flex; align-items: center; gap: 14px; font-size: 11px; color: #768a63; }
+    .journal-main .nudge .icon { color: #8ba379; }
+    .note-editor { position: relative; padding: 28px 25px; border-left: 1px solid #dce3d2; background: #f5f7ef; }
+    .note-editor h4 { font-size: 14px; font-weight: 500; margin: 0 0 11px; }
+    .note-editor .editor-meta { color: #8b987d; font-size: 10px; margin-bottom: 26px; }
+    .note-editor label { display: block; color: #738769; font-size: 11px; margin: 21px 0 10px; }
+    .note-box { background: #fffefa; border: 1px solid #dae2ce; border-radius: 6px; padding: 14px 13px; font-size: 12px; line-height: 1.9; color: #566c4c; }
+    .note-box.airy { min-height: 107px; }
+    .note-editor .btn { margin-top: 23px; }
+    .note-editor .owner-note { color: #89997a; font-size: 10px; line-height: 1.8; margin-top: 16px; }
+    .note-editor .mini-link { display: flex; align-items: center; gap: 7px; font-size: 10px; color: #789365; margin-top: 18px; }
+    .journal-phone { background: #fdfef6; }
+    .journal-phone .phone-toolbar { border-bottom: 1px solid #dee5d3; color: #789267; }
+    .phone-journal { padding: 23px 22px 0; }
+    .phone-journal .tiny { color: #92a07c; }
+    .phone-journal h3 { font-size: 29px; line-height: 1.5; font-weight: 500; margin: 14px 0 20px; letter-spacing: -.7px; }
+    .phone-journal label { display: block; color: #7e906e; font-size: 11px; margin: 18px 0 9px; }
+    .phone-journal .note-box { font-size: 13px; padding: 14px; }
+    .phone-journal .mood-row { display: flex; gap: 8px; margin-top: 12px; }
+    .phone-journal .mood-row span { flex: 1; padding: 9px 3px; border: 1px solid #dde4d0; border-radius: 6px; font-size: 10px; text-align: center; color: #8b9b7a; }
+    .phone-journal .mood-row .chosen { background: #e6eedb; color: #587944; border-color: #b9cca5; }
+    .phone-journal .model-small { font-size: 10px; margin-top: 17px; border-top: 1px solid #e2d6ba; padding-top: 12px; color: #92713e; line-height: 1.8; }
+    .journal-phone .mobile-save { position: absolute; left: 22px; right: 22px; bottom: 91px; }
+    .journal-phone .draft-status { position: absolute; bottom: 142px; left: 22px; right: 22px; text-align: center; font-size: 10px; color: #899979; }
+    .mobile-flow-board { background: #eeefe6; }
+    .mobile-flow-board .sheet-head h2 { font-size: 54px; }
+    .mobile-flow-board .sheet-badge { border-color: #baa96e; color: #806b31; }
+    .mobile-flow-board .sheet-index { color: #c9c2a1; }
+    .mobile-flow-board .phone { background: #fafbf4; }
+    .mobile-flow-board .phone-toolbar { color: #6a805c; border-bottom: 1px solid #dfe6d5; }
+    .flow-one, .flow-label-one { left: 110px; }
+    .flow-two, .flow-label-two { left: 552px; }
+    .flow-three, .flow-label-three { left: 994px; }
+    .flow-four, .flow-label-four { left: 1436px; }
+    .flow-body { padding: 22px 22px 0; }
+    .flow-body h3 { margin: 13px 0 18px; font-size: 27px; font-weight: 500; line-height: 1.5; letter-spacing: -.7px; }
+    .flow-body .tiny { color: #849568; }
+    .flow-focus { padding: 17px 17px 14px; border: 1px solid #d7dfc8; border-radius: 8px; background: #eaf0dd; }
+    .flow-focus h4 { margin: 10px 0 6px; font-size: 16px; font-weight: 500; }
+    .flow-focus svg { display: block; height: 110px; width: 100%; margin-top: 10px; }
+    .flow-source { margin-top: 14px; border: 1px solid #d9e1cb; border-radius: 6px; padding: 12px; color: #66834f; font-size: 11px; display: flex; align-items: center; justify-content: space-between; }
+    .flow-memory { padding: 16px 0; border-bottom: 1px solid #dfe6d2; }
+    .flow-memory p { font-size: 12px; line-height: 1.9; margin: 9px 0 0; color: #6c7f59; }
+    .flow-status { position: absolute; bottom: 146px; left: 22px; right: 22px; color: #768c61; font-size: 10px; line-height: 1.8; }
+    .flow-cta { position: absolute; left: 22px; right: 22px; bottom: 90px; }
+    .quick-focus { font-size: 12px; color: #567443; margin-bottom: 20px; display: flex; justify-content: space-between; }
+    .quick-step { display: flex; align-items: center; gap: 13px; border: 1px solid #d9e2ce; border-radius: 8px; min-height: 76px; padding: 14px; margin-bottom: 10px; background: #fffef8; }
+    .quick-step.done { background: #e6eddb; border-color: #c8d6b8; }
+    .completion-check { width: 30px; height: 30px; border: 1px solid #c4d2b3; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center; color: #f6f9ee; }
+    .done .completion-check { background: #628047; border-color: #628047; }
+    .quick-step h4 { margin: 0 0 7px; font-size: 13px; font-weight: 500; color: #526e40; }
+    .quick-step p { font-size: 10px; color: #89997a; margin: 0; }
+    .quick-caption { font-size: 11px; line-height: 1.9; color: #839171; margin: 18px 0 0; }
+    .quick-model { font-size: 10px; line-height: 1.8; margin-top: 16px; color: #927344; padding-top: 15px; border-top: 1px solid #e2d6bc; }
+    .flow-body label { display: block; font-size: 11px; color: #7a8d66; margin: 20px 0 10px; }
+    .situation-tags { display: flex; gap: 6px; }
+    .situation-tags span { flex: 1; text-align: center; border: 1px solid #d9e1cc; color: #839773; font-size: 10px; padding: 9px 3px; border-radius: 5px; }
+    .situation-tags .chosen { color: #55753d; border-color: #b7cba0; background: #e5eed8; }
+    .offline-box { background: #f8f0df; border: 1px solid #ded0ad; border-radius: 6px; padding: 13px; margin-top: 21px; }
+    .offline-box strong { display: block; font-size: 11px; color: #826735; font-weight: 550; margin-bottom: 7px; }
+    .offline-box p { font-size: 10px; line-height: 1.9; margin: 0; color: #937d51; }
+    .review-original { border: 1px solid #d9e2ce; padding: 15px; border-radius: 7px; background: #f2f6e9; margin-bottom: 20px; }
+    .review-original .label { font-size: 10px; color: #718961; }
+    .review-original p { font-size: 12px; line-height: 1.9; color: #5e774c; margin: 10px 0 0; }
+    .flow-four .light-model { margin-top: 20px; }
+    .flow-four .flow-source { padding: 12px 10px; font-size: 11px; }
+    .export-mode .gallery-head { display: none; }
+    .export-mode .stage { margin: 0; width: 1920px !important; height: 1200px !important; }
+    .export-mode .board { transform: none !important; }
+    @media print {
+      body { background: #fff; }
+      .gallery-head { display: none; }
+      .stage { margin: 0; break-after: page; }
+    }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 4h6c2 0 3 1 3 2 0-1 1-2 3-2h6v15h-6c-2 0-3 1-3 2 0-1-1-2-3-2H3Z"/><path d="M12 6v15"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+      <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4Z"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.5"/><path d="m15 15 6 6"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.8 6.2L21 12l-6.2 2.8L12 21l-2.8-6.2L3 12l6.2-2.8Z"/></symbol>
+      <symbol id="i-court" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx=".5"/><path d="M7 2v20M17 2v20M4 12h16M7 7h10M7 17h10M12 7v10"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 8 3-3a4 4 0 0 1 6 6l-3 3M14 16l-3 3a4 4 0 0 1-6-6l3-3M8 16l8-8"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+      <symbol id="brand-ot" viewBox="0 0 64 64">
+        <path d="M41 19A19 19 0 1 0 42 47" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="square"/>
+        <path d="M29 12h23M41 12v22" fill="none" stroke="currentColor" stroke-width="6"/>
+        <path d="M7 55Q23 30 52 22" fill="none" stroke="#c4a34b" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="54" cy="12" r="4.5" fill="#c4a34b"/>
+      </symbol>
+      <symbol id="court-study" viewBox="0 0 620 190">
+        <g fill="none" stroke="#526b59" stroke-width="1">
+          <path d="M18 20h584M18 170h584" stroke-dasharray="2 6" opacity=".55"/>
+          <rect x="358" y="24" width="218" height="143"/><path d="M378 24v143M556 24v143M358 95.5h218M378 61h178M378 132h178M467 61v71"/>
+          <circle cx="118" cy="106" r="47" stroke-dasharray="3 5"/><path d="M47 106h159M118 38v116" opacity=".5"/>
+        </g>
+        <path d="M420 146Q457 58 526 42" fill="none" stroke="#c3d99b" stroke-width="2" stroke-dasharray="5 5"/>
+        <path d="m515 43 12-2-3 12" fill="none" stroke="#c3d99b" stroke-width="2"/>
+        <circle cx="420" cy="146" r="5" fill="#c3d99b"/>
+        <circle cx="168" cy="87" r="5" fill="#d7e99e"/>
+        <path d="M118 106q20-31 50-19" stroke="#c3d99b" stroke-width="2" fill="none"/>
+        <ellipse cx="146" cy="86" rx="12" ry="23" transform="rotate(35 146 86)" fill="none" stroke="#c3d99b" stroke-width="1.6"/>
+        <path d="m133 105-18 26" stroke="#c3d99b" stroke-width="3"/>
+        <g font-family="Menlo, monospace" font-size="8" fill="#a8bf9b"><text x="21" y="13">CONTACT / OBSERVATION</text><text x="360" y="13">COURT / TOP VIEW</text><text x="219" y="97">01</text><path d="M191 94h21" stroke="#6b8563"/></g>
+      </symbol>
+      <symbol id="court-light" viewBox="0 0 240 150">
+        <g stroke="#9bac84" fill="none" stroke-width="1"><rect x="18" y="12" width="204" height="127"/><path d="M37 12v127M203 12v127M18 75.5h204M37 44h166M37 108h166M120 44v64"/></g>
+        <path d="M65 124Q98 32 182 28" fill="none" stroke="#506d3b" stroke-width="2" stroke-dasharray="4 4"/><path d="m172 26 12 1-5 10" fill="none" stroke="#506d3b" stroke-width="2"/><circle cx="65" cy="124" r="5" fill="#77954d"/><circle cx="65" cy="124" r="12" fill="none" stroke="#acbc90"/>
+      </symbol>
+      <symbol id="court-dark" viewBox="0 0 240 150">
+        <g stroke="#668467" fill="none" stroke-width="1"><rect x="18" y="12" width="204" height="127"/><path d="M37 12v127M203 12v127M18 75.5h204M37 44h166M37 108h166M120 44v64"/></g>
+        <path d="M65 124Q98 32 182 28" fill="none" stroke="#c3d99b" stroke-width="2" stroke-dasharray="4 4"/><path d="m172 26 12 1-5 10" fill="none" stroke="#c3d99b" stroke-width="2"/><circle cx="65" cy="124" r="5" fill="#d7e99e"/><circle cx="65" cy="124" r="12" fill="none" stroke="#7e9e6b"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="gallery-head">
+    <div>
+      <h1>Open Tennis / 球场页边</h1>
+      <p>双 Wiki + 内置 Agent。已选 A 的知识主结构，D 为手机闭环；原创静态意向稿不连接后端，内容与数据仅作示意。</p>
+    </div>
+    <nav aria-label="概念导航">
+      <a href="#reader">A / 知识阅读</a>
+      <a href="#practice">B / 球场训练</a>
+      <a href="#journal">C / 练后札记</a>
+      <a href="#mobile">D / 手机闭环</a>
+      <a href="design-philosophy.md">设计原则</a>
+    </nav>
+  </header>
+
+  <div class="stage">
+    <section class="board" id="reader" aria-label="A 知识阅读器，桌面和手机意向稿">
+      <header class="sheet-head">
+        <div class="eyebrow">OPEN TENNIS / COURT MARGIN</div>
+        <h2>读懂一件事，再把它带上场。</h2>
+        <p>双 Wiki 阅读器 · 技术资料与个人训练记忆，在同一个 Agent 中相遇</p>
+        <div class="sheet-index">A</div>
+        <div class="sheet-badge">READER FIRST / 推荐起点</div>
+      </header>
+      <div class="device-label web-label">01 / WEB <span>整理、阅读、提问</span></div>
+      <div class="device-label phone-label">01 / PWA <span>继续阅读，随手查阅</span></div>
+      <div class="web-frame dark">
+        <div class="app-top">
+          <div class="brand"><svg class="brand-mark"><use href="#brand-ot"/></svg><span class="brand-word">open <span>tennis</span></span><span class="tiny" style="margin-left:8px;color:#829b91">/ PRIVATE</span></div>
+          <div class="middle"><span class="top-active">技术 Wiki</span><span>训练卡</span><span>我的 Wiki</span></div>
+          <div class="right"><span style="color:#91a696">资料只读 · 笔记属于你</span><svg class="icon"><use href="#i-search"/></svg><span class="avatar">G</span></div>
+        </div>
+        <div class="reader-layout">
+          <aside class="side">
+            <div class="field row"><span>搜索我的资料</span><svg class="icon" style="width:14px;height:14px"><use href="#i-search"/></svg></div>
+            <div class="section-label">WIKI SPACES</div>
+            <div class="nav-item active"><span><svg class="icon"><use href="#i-book"/></svg>技术 Wiki</span><small>资料 15</small></div>
+            <div class="nav-item"><span><svg class="icon"><use href="#i-note"/></svg>我的训练 Wiki</span></div>
+            <div class="nav-item"><span><svg class="icon"><use href="#i-bookmark"/></svg>待审阅的改动</span></div>
+            <div class="section-label">正手 / FOREHAND</div>
+            <div class="nav-item"><span>握拍与准备</span><small>01</small></div>
+            <div class="nav-item active"><span>击球点与空间</span><small>02</small></div>
+            <div class="nav-item"><span>旋转与过网</span><small>03</small></div>
+            <div class="nav-item"><span>身体的参与</span><small>04</small></div>
+            <div class="section-label">NEXT TO EXPLORE</div>
+            <div class="nav-item" style="opacity:.55"><span>发球</span><small>待补充</small></div>
+            <div class="nav-item" style="opacity:.55"><span>反手专题</span><small>待补充</small></div>
+            <div class="side-bottom"><strong>原始资料与记录不被覆盖</strong><br>派生页面有引用、有版本。</div>
+          </aside>
+          <article class="reading">
+            <div class="row"><span class="crumb">技术 Wiki / 正手 / 击球点</span><svg class="icon" style="color:#a4b898"><use href="#i-bookmark"/></svg></div>
+            <h3>击球点，不只是一个位置。</h3>
+            <div class="meta"><span>知识卡 FH / 02</span><span>关联资料 · 2</span><span>示例页面</span></div>
+            <div class="court-figure"><svg viewBox="0 0 620 190" role="img" aria-label="原创球场与击球观察示意，不是动作测量"><use href="#court-study"/></svg></div>
+            <h4>先分清两个问题</h4>
+            <p>是在找击球位置，还是没有给动作留出空间？<br>把问题拆小，再回到关联资料中寻找对应的解释。</p>
+            <p><span class="highlight">一次只观察一个线索，不急着改完整个动作。</span><span class="source-index">01</span></p>
+            <h4>给下一次练习留一个入口</h4>
+            <p>记录最常出现问题的情境，把读到的内容与自己的感受放在一起；两者仍然是不同类型的信息。</p>
+            <div class="reading-bottom"><span>← 上一篇 / 准备与站位</span><span>查看关联原文 <svg class="icon" style="width:13px"><use href="#i-up"/></svg></span></div>
+          </article>
+          <aside class="evidence">
+            <div class="evidence-tabs"><span class="selected">Agent</span><span>修改与引用</span><svg class="icon" style="margin-left:auto;width:15px"><use href="#i-spark"/></svg></div>
+            <div class="query">结合我上次“来球变快”的记录，这次应该先看哪一部分？</div>
+            <div class="support-label">技术资料 + 我的训练 Wiki</div>
+            <p>你的记录提到了来球变快的情境。先对照下面两份技术资料，再观察同一情境下的感受。</p>
+            <div class="citation"><span class="num">01</span>准备与站位 · 资料片段<svg class="icon"><use href="#i-up"/></svg></div>
+            <div class="citation"><span class="num">02</span>击球空间 · 资料片段<svg class="icon"><use href="#i-up"/></svg></div>
+            <div class="citation"><span class="num">N03</span>来球变快 · 本人训练记录<svg class="icon"><use href="#i-up"/></svg></div>
+            <div class="model-note">
+              <div class="label">模型补充 · 未经知识库核验</div>
+              <p>可以先记录最常出现的来球情境，再比较两次练习；这不是资料中的直接结论。</p>
+            </div>
+            <div class="btn">结合我的 Wiki 预览训练卡<svg class="icon"><use href="#i-arrow"/></svg></div>
+            <p style="font-size:10px;margin-top:15px;color:#97ad90">个人主题页已更新至 v03 · 查看变更<br>技术 Wiki 的改动需你审阅后生效。</p>
+            <div class="ask-field"><span>问资料，也问我的训练经历…</span><span class="send"><svg class="icon" style="width:15px"><use href="#i-up"/></svg></span></div>
+          </aside>
+        </div>
+      </div>
+      <div class="phone reader-phone">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="left"><svg class="icon"><use href="#i-back"/></svg>知识库 / 正手</span><svg class="icon"><use href="#i-bookmark"/></svg></div>
+        <div class="phone-reading">
+          <div class="tiny">FIELD NOTES / FH.02</div>
+          <h3>击球点，<br>先留出空间。</h3>
+          <div class="small-meta">关联资料 · 2　/　阅读示例</div>
+          <div class="court-figure"><svg viewBox="0 0 240 150" role="img" aria-label="原创球场观察图"><use href="#court-dark"/></svg></div>
+          <p><span class="highlight">一次只观察一个线索。</span><br>把资料放在手边，把感受留给自己。</p>
+          <div class="citation"><span class="num">01</span>准备与站位 · 查看资料<svg class="icon"><use href="#i-up"/></svg></div>
+        </div>
+        <div class="supplement-row"><span>模型补充 · 未经核验</span><span>单独查看 →</span></div>
+        <div class="btn mobile-cta">把这条知识带去练<svg class="icon"><use href="#i-arrow"/></svg></div>
+        <div class="phone-nav"><div class="selected"><svg class="icon"><use href="#i-book"/></svg>知识</div><div><svg class="icon"><use href="#i-court"/></svg>训练</div><div><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+      <footer class="sheet-footer">
+        <div class="flow"><span>收藏资料</span><span class="arrow">→</span><span>阅读与有据提问</span><span class="arrow">→</span><span>保存一张训练卡</span></div>
+        <div class="sample-note"><strong>概念 A / 知识为核心，最贴合现有资产</strong><br>原创静态意向稿 · 内容与来源定位为示意，非已实现能力或训练处方</div>
+      </footer>
+    </section>
+  </div>
+
+  <div class="stage">
+    <section class="board practice-board" id="practice" aria-label="B 球场训练卡，桌面和手机意向稿">
+      <header class="sheet-head">
+        <div class="eyebrow">OPEN TENNIS / COURT MARGIN</div>
+        <h2>这一场，只练一件事。</h2>
+        <p>球场训练卡 · 在网页上准备，在手机上专注</p>
+        <div class="sheet-index">B</div>
+        <div class="sheet-badge">PRACTICE FIRST / 球场入口</div>
+      </header>
+      <div class="device-label web-label">02 / WEB <span>从知识生成可调整的训练卡</span></div>
+      <div class="device-label phone-label">02 / PWA <span>一次只看一个练习</span></div>
+      <div class="web-frame">
+        <div class="app-top" style="background:#fafbf5">
+          <div class="brand"><svg class="brand-mark"><use href="#brand-ot"/></svg><span class="brand-word">open <span>tennis</span></span><span class="tiny quiet" style="margin-left:8px">/ PRIVATE</span></div>
+          <div class="middle" style="color:#7c8a70"><span>技术 Wiki</span><span class="top-active" style="color:#345638">训练卡</span><span>我的 Wiki</span></div>
+          <div class="right"><span class="quiet">一张知识卡，一个关注点</span><span class="avatar">G</span></div>
+        </div>
+        <div class="practice-layout">
+          <aside class="side">
+            <div class="field row"><span>搜索训练卡</span><svg class="icon" style="width:14px;height:14px"><use href="#i-search"/></svg></div>
+            <div class="section-label">MY PRACTICE</div>
+            <div class="nav-item active"><span><svg class="icon"><use href="#i-court"/></svg>准备去练</span></div>
+            <div class="nav-item"><span><svg class="icon"><use href="#i-bookmark"/></svg>保存的卡片</span></div>
+            <div class="nav-item"><span><svg class="icon"><use href="#i-note"/></svg>练习记录</span></div>
+            <div class="section-label">ONE FOCUS</div>
+            <div class="nav-item active"><span>击球空间</span><small>FH / 02</small></div>
+            <div class="nav-item"><span>准备与节奏</span><small>FH / 01</small></div>
+            <div class="side-bottom"><strong>从知识到行动</strong><br>训练可以调整，来源始终保留。</div>
+          </aside>
+          <main class="practice-main">
+            <div class="row"><span class="tiny quiet">SESSION / 001</span><span class="pill"><span class="dot"></span>可调整的训练草稿</span></div>
+            <h3>今天，只练一个重点。</h3>
+            <div class="sub">由「击球点与空间」知识卡创建 · 练习内容示意</div>
+            <div class="focus-banner">
+              <div><div class="tiny" style="color:#7c8c61">YOUR FOCUS</div><h4>给击球留出空间</h4><p>把注意力放在可观察的细节上。</p></div>
+              <svg viewBox="0 0 240 150" role="img" aria-label="原创训练场示意"><use href="#court-light"/></svg>
+            </div>
+            <div class="drill-heading"><span>三个步骤 / 逐步进入练习</span><span class="model-tag">编排与组数：模型补充 · 未核验</span></div>
+            <div class="drill"><span class="drill-num">01</span><div><h5>感受动作</h5><p>慢下来，先观察自己的准备与空间。</p></div><span class="dose">2 × 8</span></div>
+            <div class="drill"><span class="drill-num">02</span><div><h5>慢速控球</h5><p>在可控节奏里，只记住同一个关注点。</p></div><span class="dose">3 × 10</span></div>
+            <div class="drill"><span class="drill-num">03</span><div><h5>回合应用</h5><p>把线索带入回合，结束后记录感受。</p></div><span class="dose">2 × 5</span></div>
+            <div class="practice-actions"><div class="btn outline">调整这张卡</div><div class="btn">保存，带去球场<svg class="icon"><use href="#i-arrow"/></svg></div></div>
+          </main>
+          <aside class="practice-evidence">
+            <h4>这张卡从哪里来</h4>
+            <div class="source-tile"><div class="index">SOURCE / 01</div><h5>击球点与空间</h5><p>知识库 · 正手基础</p></div>
+            <div class="source-tile"><div class="index">SOURCE / 02</div><h5>准备与站位</h5><p>知识库 · 动作观察</p></div>
+            <div class="light-model"><div class="label">模型补充 · 未经知识库核验</div><p>关联资料解释动作主题；练习编排与组数由模型补充，不等于资料中的训练处方。</p></div>
+            <div class="session-settings">
+              <div class="tiny quiet">PRACTICE CONTEXT</div>
+              <div class="row"><span>可用时间</span><strong>20 分钟</strong></div>
+              <div class="row"><span>练习地点</span><strong>球场</strong></div>
+              <div class="row"><span>个人限制</span><strong>由你补充</strong></div>
+            </div>
+            <div class="bottom-note">卡片由你决定是否采用。<br>出现疼痛时停止练习，不把 AI 当作诊疗。</div>
+          </aside>
+        </div>
+      </div>
+      <div class="phone practice-phone">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="left"><svg class="icon"><use href="#i-back"/></svg>今天的训练</span><span>1 / 3</span></div>
+        <div class="phone-training">
+          <div class="tiny quiet">ONE FOCUS / 击球空间</div>
+          <div class="progress"><i></i><i></i><i></i></div>
+          <div class="step">01</div>
+          <h3>先感受，<br>再把球打出去。</h3>
+          <div class="training-art"><svg viewBox="0 0 240 150" role="img" aria-label="训练场原创示意"><use href="#court-light"/></svg></div>
+          <div class="feel">慢下来，只观察这一个线索：<br><strong style="font-weight:550">有没有给动作留出空间？</strong></div>
+          <div class="doses"><span>2 组</span><span>每组 8 次</span><span>可调整</span></div>
+          <div class="model-caption">练习与组数为模型补充 · 未经核验</div>
+        </div>
+        <div class="btn mobile-cta">完成这一项<svg class="icon"><use href="#i-arrow"/></svg></div>
+        <div class="phone-nav"><div><svg class="icon"><use href="#i-book"/></svg>知识</div><div class="selected"><svg class="icon"><use href="#i-court"/></svg>训练</div><div><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+      <footer class="sheet-footer">
+        <div class="flow"><span>选择一个问题</span><span class="arrow">→</span><span>看清依据与补充</span><span class="arrow">→</span><span>专注一张训练卡</span></div>
+        <div class="sample-note"><strong>概念 B / A 的行动视图，不是另一个产品</strong><br>原创静态意向稿 · 练习、组数与时长均为界面样例，不是个体化训练建议</div>
+      </footer>
+    </section>
+  </div>
+
+  <div class="stage">
+    <section class="board journal-board" id="journal" aria-label="C 练后札记，桌面和手机意向稿">
+      <header class="sheet-head">
+        <div class="eyebrow">OPEN TENNIS / COURT MARGIN</div>
+        <h2>让每次练习，留下一点线索。</h2>
+        <p>练后札记 · 不急着评分，先保存真实的感受</p>
+        <div class="sheet-index">C</div>
+        <div class="sheet-badge">JOURNAL FIRST / 拓展方向</div>
+      </header>
+      <div class="device-label web-label">03 / WEB <span>回看练习，与知识重新连接</span></div>
+      <div class="device-label phone-label">03 / PWA <span>离开球场前，写下三句话</span></div>
+      <div class="web-frame">
+        <div class="app-top" style="background:#f9fbf5">
+          <div class="brand"><svg class="brand-mark"><use href="#brand-ot"/></svg><span class="brand-word">open <span>tennis</span></span><span class="tiny quiet" style="margin-left:8px">/ PRIVATE</span></div>
+          <div class="middle" style="color:#7c8a70"><span>技术 Wiki</span><span>训练卡</span><span class="top-active" style="color:#345638">我的 Wiki</span></div>
+          <div class="right"><span class="quiet">本人记录 · AI 不改写</span><span class="avatar">G</span></div>
+        </div>
+        <div class="journal-layout">
+          <aside class="side">
+            <div class="field row"><span>搜索练习记录</span><svg class="icon" style="width:14px;height:14px"><use href="#i-search"/></svg></div>
+            <div class="section-label">FIELD NOTES</div>
+            <div class="nav-item active"><span><svg class="icon"><use href="#i-note"/></svg>全部札记</span></div>
+            <div class="nav-item"><span><svg class="icon"><use href="#i-court"/></svg>关联训练</span></div>
+            <div class="nav-item"><span><svg class="icon"><use href="#i-book"/></svg>回看知识</span></div>
+            <div class="section-label">BY FOCUS</div>
+            <div class="nav-item active"><span>击球空间</span></div>
+            <div class="nav-item"><span>准备与节奏</span></div>
+            <div class="side-bottom"><strong>你的感受，不是模型的结论</strong><br>AI 可以提建议，不能改写历史。</div>
+          </aside>
+          <main class="journal-main">
+            <div class="row"><span class="tiny quiet">PRACTICE / REFLECTION</span><span class="pill">示例记录</span></div>
+            <h3>把感受留下来。</h3>
+            <div class="sub">不必每次都有进步，但每次都可以多了解自己一点。</div>
+            <div class="rhythm">
+              <div><span class="number">03</span><small>练习札记 / 示例</small></div>
+              <div class="days"><div class="day">一<span class="ball played"></span></div><div class="day">二<span class="ball"></span></div><div class="day">三<span class="ball played"></span></div><div class="day">四<span class="ball"></span></div><div class="day">五<span class="ball"></span></div><div class="day">六<span class="ball played"></span></div><div class="day">日<span class="ball"></span></div></div>
+            </div>
+            <div class="timeline-label"><span>RECENT ENTRIES</span><span>按练习回看，不做表现评分</span></div>
+            <div class="entry"><div class="entry-meta"><span>SESSION / 03</span><span>本人记录</span></div><h4>慢一点，更容易察觉问题。</h4><p>今天先留意站位，再去观察击球点；一着急，还是会忘记。</p><div class="link"><svg class="icon" style="width:12px;height:12px"><use href="#i-link"/></svg> 关联知识 / 击球点与空间</div></div>
+            <div class="entry"><div class="entry-meta"><span>SESSION / 02</span><span>本人记录</span></div><h4>把目标缩小以后，更专注了。</h4><p>没有同时改好几个动作，只记下最常出现问题的情境。</p><div class="link"><svg class="icon" style="width:12px;height:12px"><use href="#i-link"/></svg> 关联训练 / 一个关注点</div></div>
+            <div class="entry"><div class="entry-meta"><span>SESSION / 01</span><span>本人记录</span></div><h4>第一张练习卡。</h4><p>先记录，不急着判断结果。</p></div>
+            <div class="nudge"><svg class="icon"><use href="#i-book"/></svg>下一次可以从同一张知识卡开始，而不必重新问一遍。</div>
+          </main>
+          <aside class="note-editor">
+            <h4>写给下一次的自己</h4>
+            <div class="editor-meta">新札记 / 草稿</div>
+            <label>这次练了什么</label>
+            <div class="note-box">击球空间 · 感受动作</div>
+            <label>最明显的感受</label>
+            <div class="note-box airy">慢一点时，能更清楚地观察到自己是否挤在球旁边。</div>
+            <label>下次想试什么</label>
+            <div class="note-box">继续关注同一个线索，不急着加新动作。</div>
+            <div class="mini-link"><svg class="icon" style="width:13px;height:13px"><use href="#i-link"/></svg>关联 / FH.02 击球点与空间</div>
+            <div class="btn">保存我的札记</div>
+            <div class="owner-note">保留你的原话。AI 建议另存，不覆盖记录。</div>
+            <div class="light-model" style="margin-top:23px"><div class="label">模型复盘 · 未经知识库核验</div><p>建议仍需验证，不把你的主观感受当作技术效果的证明。</p></div>
+          </aside>
+        </div>
+      </div>
+      <div class="phone journal-phone">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="left"><svg class="icon"><use href="#i-back"/></svg>练后札记</span><span>草稿</span></div>
+        <div class="phone-journal">
+          <div class="tiny">AFTER THE COURT</div>
+          <h3>今天，<br>有什么不同？</h3>
+          <label>关联训练</label>
+          <div class="note-box row"><span>击球空间 · 第一次尝试</span><svg class="icon" style="width:14px"><use href="#i-link"/></svg></div>
+          <label>写下一个真实的感受</label>
+          <div class="note-box" style="height:119px">慢一点时，更容易留意到自己的站位。下次还想继续观察这个线索。</div>
+          <label>今天的主观感觉</label>
+          <div class="mood-row"><span>还没感觉</span><span class="chosen">有点线索</span><span>更清楚了</span></div>
+          <div class="model-small">模型复盘未经核验，也不修改你的原话。<br>你的感受不等于经过测量的效果。</div>
+        </div>
+        <div class="draft-status">尚未提交 · 保存后进入练习历史</div>
+        <div class="btn mobile-save">保存这次记录<svg class="icon"><use href="#i-arrow"/></svg></div>
+        <div class="phone-nav"><div><svg class="icon"><use href="#i-book"/></svg>知识</div><div><svg class="icon"><use href="#i-court"/></svg>训练</div><div class="selected"><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+      <footer class="sheet-footer">
+        <div class="flow"><span>完成练习</span><span class="arrow">→</span><span>写下原始感受</span><span class="arrow">→</span><span>带着线索再读一遍</span></div>
+        <div class="sample-note"><strong>概念 C / 首版只取轻量记录，完整回看后续扩展</strong><br>原创静态意向稿 · 日历与札记均为样例，没有虚构的效果提升或能力评分</div>
+      </footer>
+    </section>
+  </div>
+  <div class="stage">
+    <section class="board mobile-flow-board" id="mobile" aria-label="D 移动优先的训练记录闭环">
+      <header class="sheet-head">
+        <div class="eyebrow">OPEN TENNIS / COURT MARGIN</div>
+        <h2>记录要轻，回看要有用。</h2>
+        <p>手机闭环 · 少量记录，经 Agent 整理为个人训练 Wiki，再与技术资料一起被检索和使用</p>
+        <div class="sheet-index">D</div>
+        <div class="sheet-badge">MOBILE LOOP / 已选 MVP 的补充</div>
+      </header>
+      <div class="device-label flow-label-one">01 / 练前 <span>沿用一个关注点</span></div>
+      <div class="device-label flow-label-two">02 / 练中 <span>休息时快速勾选</span></div>
+      <div class="device-label flow-label-three">03 / 练后 <span>保留一句真实感受</span></div>
+      <div class="device-label flow-label-four">04 / 提交后 <span>Agent 更新我的训练 Wiki</span></div>
+
+      <div class="phone flow-one">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="brand"><svg class="brand-mark" style="width:24px;height:24px"><use href="#brand-ot"/></svg><span class="brand-word">open <span>tennis</span></span></span><svg class="icon"><use href="#i-bookmark"/></svg></div>
+        <div class="flow-body">
+          <div class="tiny">BEFORE / 来自我的知识库</div>
+          <h3>今天只关注<br>击球空间。</h3>
+          <div class="flow-focus"><div class="tiny">FOCUS / FH.02</div><h4>把读到的内容带去练</h4><svg viewBox="0 0 240 150" role="img" aria-label="原创球场图示"><use href="#court-light"/></svg></div>
+          <div class="flow-source"><span>关联资料 / 准备与站位</span><svg class="icon" style="width:14px"><use href="#i-up"/></svg></div>
+          <div class="flow-memory"><div class="tiny">LAST TIME / 本人记录</div><p>来球变快时，容易忘记先给自己留出空间。</p></div>
+        </div>
+        <div class="flow-status">这张卡已保存，可离线查看。<br>来源与模型补充的标记会一起保留。</div>
+        <div class="btn flow-cta">打开训练卡<svg class="icon"><use href="#i-arrow"/></svg></div>
+        <div class="phone-nav"><div><svg class="icon"><use href="#i-book"/></svg>知识</div><div class="selected"><svg class="icon"><use href="#i-court"/></svg>训练</div><div><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+
+      <div class="phone flow-two">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="left"><svg class="icon"><use href="#i-back"/></svg>训练中</span><span>离线可用</span></div>
+        <div class="flow-body">
+          <div class="tiny">ON COURT / 保持简单</div>
+          <h3>休息时，<br>记一下就好。</h3>
+          <div class="quick-focus"><span>正手 · 击球空间</span><span>2 / 3 项</span></div>
+          <div class="quick-step done"><span class="completion-check"><svg class="icon"><use href="#i-check"/></svg></span><div><h4>感受动作</h4><p>已完成 · 可撤销</p></div></div>
+          <div class="quick-step done"><span class="completion-check"><svg class="icon"><use href="#i-check"/></svg></span><div><h4>慢速控球</h4><p>已完成 · 可撤销</p></div></div>
+          <div class="quick-step"><span class="completion-check"></span><div><h4>回合应用</h4><p>未完成 · 可以跳过</p></div></div>
+          <p class="quick-caption">不用每一球都输入。<br>第一版只记完成状态，不强制记球数。</p>
+          <div class="quick-model">训练编排属于模型补充 · 未经知识库核验。<br>可以调整，也可以不采用。</div>
+        </div>
+        <div class="flow-status">本机草稿 · 尚未提交到电脑</div>
+        <div class="btn flow-cta">结束，留一句感受<svg class="icon"><use href="#i-arrow"/></svg></div>
+        <div class="phone-nav"><div><svg class="icon"><use href="#i-book"/></svg>知识</div><div class="selected"><svg class="icon"><use href="#i-court"/></svg>训练</div><div><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+
+      <div class="phone flow-three">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="left"><svg class="icon"><use href="#i-back"/></svg>练后记录</span><span>离线 · 草稿</span></div>
+        <div class="flow-body">
+          <div class="tiny">AFTER / 保留你的原话</div>
+          <h3>记一个场景，<br>留一句感受。</h3>
+          <label>哪种情境最明显（可选）</label>
+          <div class="situation-tags"><span>移动之后</span><span class="chosen">来球变快</span><span>长回合</span></div>
+          <label>这次的感受（可选）</label>
+          <div class="note-box" style="min-height:119px">来球一快就容易着急。慢下来以后，更容易观察到自己的站位。</div>
+          <label>主观感受，不是能力评分</label>
+          <div class="situation-tags"><span>还没感觉</span><span class="chosen">有点线索</span><span>更清楚了</span></div>
+          <div class="offline-box"><strong>草稿只在这台设备</strong><p>还未同步到电脑。联网后会提示你确认提交，不会悄悄上传。</p></div>
+        </div>
+        <div class="flow-status">没有感受也可以先留完成记录。</div>
+        <div class="btn flow-cta">完成并保留草稿<svg class="icon"><use href="#i-note"/></svg></div>
+        <div class="phone-nav"><div><svg class="icon"><use href="#i-book"/></svg>知识</div><div><svg class="icon"><use href="#i-court"/></svg>训练</div><div class="selected"><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+
+      <div class="phone flow-four">
+        <div class="status-bar"><span>9:41</span><span class="status-icons"><span class="signal"><i></i><i></i><i></i><i></i></span><span class="battery"></span></span></div>
+        <div class="phone-toolbar"><span class="left"><svg class="icon"><use href="#i-back"/></svg>我的训练 Wiki</span><span>v03</span></div>
+        <div class="flow-body">
+          <div class="tiny">UPDATED / AGENT 已整理</div>
+          <h3>我的正手问题，<br>有了新的线索。</h3>
+          <div class="review-original"><div class="label">来自原始训练记录 / N03</div><p>来球一快就容易着急。慢下来以后，更容易观察到自己的站位。</p></div>
+          <label>主题页 / 击球空间 · 本次变更</label>
+          <div class="flow-source"><span>新增情境 / 来球变快</span><svg class="icon" style="width:14px"><use href="#i-link"/></svg></div>
+          <div class="flow-source"><span>技术来源 / 准备与站位</span><svg class="icon" style="width:14px"><use href="#i-up"/></svg></div>
+          <div class="light-model"><div class="label">模型补充 · 未经知识库核验</div><p>可以沿用同一关注点，在相似的来球情境下继续观察，而不是立刻增加新的动作目标。</p></div>
+        </div>
+        <div class="flow-status">派生页已更新，原始记录未改动。<br>查看引用 · 本次变更 · 回退版本</div>
+        <div class="btn flow-cta">据此预览下一张训练卡<svg class="icon"><use href="#i-arrow"/></svg></div>
+        <div class="phone-nav"><div><svg class="icon"><use href="#i-book"/></svg>知识</div><div><svg class="icon"><use href="#i-court"/></svg>训练</div><div class="selected"><svg class="icon"><use href="#i-note"/></svg>我的 Wiki</div></div>
+      </div>
+      <footer class="sheet-footer">
+        <div class="flow"><span>资料与记录</span><span class="arrow">→</span><span>Agent 整理成 Wiki</span><span class="arrow">→</span><span>下一次的行动</span></div>
+        <div class="sample-note"><strong>同一个 PWA / 不做每球计分、胜率榜或自动动作诊断</strong><br>原创工作流意向稿 · 示例状态与记录 · 离线能力及提交行为尚待实现和真机验证</div>
+      </footer>
+    </section>
+  </div>
+  <script>
+    function fitBoards() {
+      const scale = Math.min(1, (window.innerWidth - 48) / 1920);
+      document.querySelectorAll(".stage").forEach((stage) => {
+        stage.style.width = `${1920 * scale}px`;
+        stage.style.height = `${1200 * scale}px`;
+        stage.firstElementChild.style.transform = `scale(${scale})`;
+      });
+    }
+    fitBoards();
+    window.addEventListener("resize", fitBoards);
+  </script>
+</body>
+</html>

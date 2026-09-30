@@ -11,12 +11,19 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+if config.config_file_name is not None and config.attributes.get("connection") is None:
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 from app.models.models import *
+from app.models.knowledge import *
+from app.core.config import get_settings
+
+if config.attributes.get("connection") is None:
+    config.set_main_option(
+        "sqlalchemy.url", get_settings().sqlite_url.replace("%", "%%")
+    )
 
 target_metadata = SQLModel.metadata
 
@@ -57,6 +64,13 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    supplied_connection = config.attributes.get("connection")
+    if supplied_connection is not None:
+        context.configure(connection=supplied_connection, target_metadata=target_metadata)
+        with context.begin_transaction():
+            context.run_migrations()
+        return
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

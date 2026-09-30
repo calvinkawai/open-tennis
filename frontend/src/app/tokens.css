@@ -1,0 +1,150 @@
+/*
+  Open Tennis · Court Margin v2 design tokens
+  ------------------------------------------------------------
+  One token set for web, phone and the dark reading mode.
+  Light is the default (outdoor / court readability); dark is an
+  opt-in reading mode. globals.css imports this file; components use only
+  these names instead of hard-coding hex values.
+
+  Rules that the tokens encode:
+  - Every text color is >= 4.5:1 on --ot-paper, --ot-surface and --ot-rail.
+  - --ot-gold / --ot-lime are brand and trajectory accents, never body text.
+  - Evidence kinds are never color-only: each has a rule style, a marker
+    letter and a written label (see "evidence grammar" below).
+*/
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* surfaces */
+  --ot-paper: #f3f2ea;        /* app background */
+  --ot-surface: #fbfaf4;      /* reading column, cards */
+  --ot-rail: #ecede3;         /* navigation rails */
+  --ot-sunken: #e4e6da;       /* segmented controls, pressed */
+  --ot-line: #d8dbcd;
+  --ot-line-strong: #bec5b2;
+  --ot-scrim: rgb(24 38 31 / 0.42);
+
+  /* text */
+  --ot-ink: #1e3228;          /* 12.1:1 on paper */
+  --ot-ink-2: #475a4d;        /* 6.6:1 */
+  --ot-ink-3: #5f6e63;        /* 4.8:1 — lowest allowed text tone */
+
+  /* action */
+  --ot-court: #2e5c45;        /* primary action background */
+  --ot-on-court: #ffffff;     /* 7.7:1 on court */
+  --ot-court-soft: #dce7d5;   /* selected nav / chosen chip */
+  --ot-focus: #b8923a;        /* 3px focus ring, non-text */
+
+  /* brand accents (decorative only) */
+  --ot-gold: #b8923a;         /* 2.6:1 — never text */
+  --ot-lime: #d4e89a;
+  --ot-gold-ink: #7d5f16;     /* wordmark text — 5.1:1 */
+  --ot-on-ok: #ffffff;
+  --ot-on-warn: #ffffff;
+  --ot-on-danger: #ffffff;
+  --ot-highlight: #e8f1c6;    /* selected passage */
+
+  /* evidence grammar */
+  --ot-source: #2a6547;       /* 资料支持 · solid rule · marker S */
+  --ot-source-bg: #e4eee1;
+  --ot-journal: #3a5680;      /* 本人记录 · dotted rule · marker J */
+  --ot-journal-bg: #e6ebf3;
+  --ot-model: #80540e;        /* 模型补充 · dashed box · no marker */
+  --ot-model-bg: #faf0dc;
+  --ot-model-line: #d5b373;
+  --ot-pending: #80540e;      /* 待审阅 · hollow dot · hatched */
+
+  /* feedback */
+  --ot-danger: #9e3b27;
+  --ot-danger-bg: #fae8e2;
+  --ot-ok: #2a6547;
+  --ot-ok-bg: #e4eee1;
+  --ot-warn: #80540e;
+  --ot-warn-bg: #faf0dc;
+
+  /* type */
+  --ot-font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Helvetica Neue", sans-serif;
+  --ot-font-num: "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --ot-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --ot-fs-display: 40px;
+  --ot-fs-title: 30px;
+  --ot-fs-h2: 21px;
+  --ot-fs-body: 17px;
+  --ot-lh-body: 1.8;
+  --ot-fs-ui: 15px;
+  --ot-fs-meta: 13px;
+  --ot-fs-min: 12px;          /* nothing smaller ships */
+  --ot-measure: 36em;         /* ≈ 36 CJK characters per line */
+
+  /* space · 4px grid */
+  --ot-s1: 4px;
+  --ot-s2: 8px;
+  --ot-s3: 12px;
+  --ot-s4: 16px;
+  --ot-s5: 24px;
+  --ot-s6: 32px;
+  --ot-s7: 48px;
+  --ot-s8: 64px;
+
+  /* shape */
+  --ot-r-control: 8px;
+  --ot-r-card: 12px;
+  --ot-r-sheet: 20px;
+  --ot-r-pill: 999px;
+
+  /* touch */
+  --ot-touch-min: 44px;
+  --ot-touch-primary: 52px;
+
+  /* elevation */
+  --ot-shadow-card: 0 1px 0 rgb(30 50 40 / 0.04), 0 8px 24px -18px rgb(30 50 40 / 0.35);
+  --ot-shadow-sheet: 0 -16px 40px -16px rgb(20 36 28 / 0.35);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ot-paper: #131c1a;
+  --ot-surface: #18231f;
+  --ot-rail: #0f1715;
+  --ot-sunken: #22302b;
+  --ot-line: #2a3833;
+  --ot-line-strong: #3b4c45;
+  --ot-scrim: rgb(0 0 0 / 0.5);
+
+  --ot-ink: #e3e9de;          /* 14.1:1 */
+  --ot-ink-2: #b3c0b3;        /* 9.2:1 */
+  --ot-ink-3: #8fa093;        /* 6.3:1 */
+
+  --ot-court: #d4e89a;        /* primary action becomes lime */
+  --ot-on-court: #17261e;     /* 11.9:1 on lime */
+  --ot-court-soft: #243a2f;
+  --ot-focus: #d9bd6e;
+  --ot-gold-ink: #dcc376;
+  --ot-on-ok: #17261e;
+  --ot-on-warn: #17261e;
+  --ot-on-danger: #17261e;
+
+  --ot-highlight: #33422a;
+
+  --ot-source: #9cd2ac;
+  --ot-source-bg: #1d2e26;
+  --ot-journal: #a8c0e8;
+  --ot-journal-bg: #1c2533;
+  --ot-model: #e3c07c;
+  --ot-model-bg: #2c2516;
+  --ot-model-line: #6e5a2f;
+  --ot-pending: #e3c07c;
+
+  --ot-danger: #f09a86;
+  --ot-danger-bg: #3a211b;
+  --ot-ok: #9cd2ac;
+  --ot-ok-bg: #1d2e26;
+  --ot-warn: #e3c07c;
+  --ot-warn-bg: #2c2516;
+
+  --ot-shadow-card: 0 1px 0 rgb(0 0 0 / 0.2), 0 10px 26px -18px rgb(0 0 0 / 0.7);
+  --ot-shadow-sheet: 0 -16px 40px -16px rgb(0 0 0 / 0.7);
+}
