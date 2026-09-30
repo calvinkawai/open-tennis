@@ -1,0 +1,1316 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Tennis 视觉稿 v2</title>
+  <link rel="stylesheet" href="../../../frontend/src/app/tokens.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { background: #d9dbd2; color: var(--ot-ink); font-family: var(--ot-font-sans); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    p, h1, h2, h3, h4, h5, ul, ol { margin: 0; }
+    ul, ol { padding: 0; list-style: none; }
+
+    /* ───────── gallery chrome ───────── */
+    .gallery-head { max-width: 1500px; margin: 40px auto 20px; padding: 0 32px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+    .gallery-head h1 { font-size: 26px; font-weight: 600; letter-spacing: -.6px; margin-bottom: 8px; }
+    .gallery-head p { font-size: 14px; line-height: 1.8; color: #45574b; max-width: 760px; }
+    .gallery-head nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .gallery-head nav a { padding: 9px 13px; border: 1px solid #b3bdb0; border-radius: 8px; font-size: 13px; background: #eef0e8; }
+    .stage { position: relative; margin: 24px auto 44px; }
+    .board { position: absolute; top: 0; left: 0; width: 1920px; height: 1200px; overflow: hidden; transform-origin: top left; background: var(--ot-paper); color: var(--ot-ink); }
+    .board::before { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(#2e4a3a17 .9px, transparent .9px); background-size: 12px 12px; mask-image: linear-gradient(90deg, #000, transparent 30%, transparent 82%, #000); }
+    body.export { background: var(--ot-paper); }
+    body.export .gallery-head { display: none; }
+    body.export .stage { margin: 0; width: 1920px !important; height: 1200px !important; }
+    body.export .board { transform: none !important; }
+
+    /* ───────── sheet furniture ───────── */
+    .sheet-head { position: absolute; left: 72px; right: 72px; top: 50px; }
+    .sheet-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 2.8px; display: flex; align-items: center; gap: 14px; }
+    .sheet-eyebrow::before { content: ""; width: 24px; height: 3px; background: var(--ot-court); }
+    .sheet-head h2 { margin: 20px 0 10px; font-size: 48px; line-height: 1.2; letter-spacing: -1.6px; font-weight: 600; }
+    .sheet-head > p { font-size: 17px; color: var(--ot-ink-2); letter-spacing: .2px; }
+    .sheet-index { position: absolute; right: 0; top: -14px; font: italic 400 104px/1 var(--ot-font-num); color: #c2cbb6; letter-spacing: -2px; }
+    .sheet-badge { position: absolute; right: 0; top: 102px; border: 1px solid var(--ot-line-strong); background: var(--ot-surface); padding: 8px 14px; border-radius: 999px; font-size: 12px; letter-spacing: 1px; color: var(--ot-ink-2); }
+    .device-label { position: absolute; top: 200px; display: flex; gap: 14px; align-items: baseline; font: 12px/1.3 var(--ot-font-mono); color: var(--ot-ink-3); letter-spacing: 1.2px; white-space: nowrap; }
+    .device-label span { font: 13px/1.3 var(--ot-font-sans); color: var(--ot-ink-2); letter-spacing: 0; }
+    .sheet-footer { position: absolute; left: 72px; right: 72px; top: 1102px; display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; }
+    .flow { display: flex; align-items: center; gap: 16px; font-size: 15px; font-weight: 500; flex-wrap: wrap; max-width: 1100px; }
+    .flow .arr { color: var(--ot-ink-3); font-weight: 300; }
+    .sample-note { font-size: 12px; line-height: 1.8; color: var(--ot-ink-3); text-align: right; }
+    .sample-note strong { color: var(--ot-ink-2); font-weight: 600; }
+
+    .web-frame { position: absolute; left: 72px; top: 234px; width: 1320px; height: 828px; border: 1px solid var(--ot-line-strong); border-radius: 14px; overflow: hidden; box-shadow: 0 26px 48px -32px #15261c80; }
+    .phone { position: absolute; top: 226px; width: 391px; height: 844px; border: 8px solid #25312c; border-radius: 52px; overflow: hidden; background: var(--ot-paper); color: var(--ot-ink); box-shadow: 0 26px 48px -28px #15261c80; }
+    .phone.p-side { left: 1457px; }
+    .phone::after { content: ""; position: absolute; left: 130px; bottom: 8px; width: 115px; height: 5px; border-radius: 5px; background: var(--ot-ink); opacity: .55; z-index: 30; }
+
+    /* ───────── icons ───────── */
+    .ico { width: 18px; height: 18px; display: inline-block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; vertical-align: middle; }
+    .ico.s { width: 14px; height: 14px; }
+    .ico.l { width: 22px; height: 22px; }
+
+    /* ───────── shared app chrome (token-driven) ───────── */
+    .app { position: relative; display: flex; flex-direction: column; height: 100%; background: var(--ot-paper); color: var(--ot-ink); }
+    .topbar { height: 56px; flex: 0 0 56px; display: flex; align-items: center; gap: 26px; padding: 0 20px 0 18px; border-bottom: 1px solid var(--ot-line); background: var(--ot-surface); }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 16px; font-weight: 600; letter-spacing: -.3px; color: var(--ot-court); white-space: nowrap; }
+    [data-theme="dark"] .brand { color: #cfe0c2; }
+    .brand .mark { width: 28px; height: 28px; color: var(--ot-court); }
+    [data-theme="dark"] .brand .mark { color: #b9cea6; }
+    .brand em { font-style: normal; color: #8a6b22; }
+    [data-theme="dark"] .brand em { color: #dcc376; }
+    .brand .private { font: 12px var(--ot-font-mono); letter-spacing: 1px; color: var(--ot-ink-3); margin-left: 6px; font-weight: 400; }
+    .tabs { display: flex; gap: 4px; align-self: stretch; }
+    .tabs a { display: flex; align-items: center; padding: 0 12px; font-size: 14px; color: var(--ot-ink-2); position: relative; }
+    .tabs a.on { color: var(--ot-ink); font-weight: 600; }
+    .tabs a.on::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--ot-court); }
+    .search { margin-left: auto; width: 290px; height: 36px; border: 1px solid var(--ot-line); border-radius: 8px; background: var(--ot-paper); display: flex; align-items: center; gap: 8px; padding: 0 8px 0 11px; font-size: 13px; color: var(--ot-ink-3); }
+    .kbd { margin-left: auto; font: 12px/1 var(--ot-font-mono); border: 1px solid var(--ot-line); border-radius: 5px; padding: 3px 6px; color: var(--ot-ink-3); background: var(--ot-surface); }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--ot-court-soft); color: var(--ot-ink); font: 14px var(--ot-font-num); flex: 0 0 auto; }
+    .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; color: var(--ot-ink-2); border: 1px solid var(--ot-line); }
+
+    .eyebrow { font: 12px/1.5 var(--ot-font-mono); letter-spacing: 1.6px; color: var(--ot-ink-3); }
+    .chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; line-height: 1; border: 1px solid var(--ot-line); color: var(--ot-ink-2); background: var(--ot-surface); white-space: nowrap; }
+    .chip.ok { color: var(--ot-ok); background: var(--ot-ok-bg); border-color: color-mix(in srgb, var(--ot-ok) 28%, transparent); }
+    .chip.warn { color: var(--ot-warn); background: var(--ot-warn-bg); border-color: var(--ot-model-line); }
+    .chip.danger { color: var(--ot-danger); background: var(--ot-danger-bg); border-color: color-mix(in srgb, var(--ot-danger) 30%, transparent); }
+    .chip.journal { color: var(--ot-journal); background: var(--ot-journal-bg); border-color: color-mix(in srgb, var(--ot-journal) 28%, transparent); }
+    .chip.pending { color: var(--ot-pending); border-style: dashed; border-color: var(--ot-model-line); background: repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--ot-pending) 10%, transparent) 5px 6px), var(--ot-surface); }
+    .chip.solid { color: var(--ot-on-court); background: var(--ot-court); border-color: var(--ot-court); }
+    .chip .ico { width: 14px; height: 14px; stroke-width: 1.8; }
+    .led { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: var(--ot-r-control); font-size: 14px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+    .btn.primary { background: var(--ot-court); color: var(--ot-on-court); }
+    .btn.secondary { color: var(--ot-ink); border-color: var(--ot-line-strong); background: var(--ot-surface); }
+    .btn.ghost { color: var(--ot-ink-2); padding: 0 8px; }
+    .btn.off { background: var(--ot-sunken); color: var(--ot-ink-3); }
+    .btn.big { height: 52px; font-size: 16px; border-radius: 10px; }
+    .btn.full { width: 100%; }
+
+    .check { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 14px; color: var(--ot-ink); }
+    .check .box { width: 22px; height: 22px; border: 1.5px solid var(--ot-line-strong); border-radius: 6px; flex: 0 0 auto; display: grid; place-items: center; background: var(--ot-surface); }
+    .check.on .box { background: var(--ot-court); border-color: var(--ot-court); color: var(--ot-on-court); }
+    .check .box .ico { width: 15px; height: 15px; stroke-width: 2.4; }
+
+    /* evidence grammar */
+    .mk { display: inline-flex; align-items: center; height: 21px; padding: 0 6px; margin: 0 2px 0 3px; border-radius: 5px; font: 600 12px/1 var(--ot-font-mono); vertical-align: 2px; white-space: nowrap; }
+    .mk.s { color: var(--ot-source); background: var(--ot-source-bg); }
+    .mk.j { color: var(--ot-journal); background: var(--ot-journal-bg); }
+    .mk.p { color: var(--ot-pending); background: var(--ot-warn-bg); outline: 1px dashed var(--ot-model-line); outline-offset: -1px; }
+    .mk.sel { color: var(--ot-surface); background: var(--ot-source); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ot-source) 26%, transparent); }
+    .hl { background: var(--ot-highlight); box-shadow: 0 2px 0 var(--ot-source); padding: 1px 0; }
+    .kind { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; }
+    .kind .ico { width: 15px; height: 15px; stroke-width: 1.8; }
+    .kind.s { color: var(--ot-source); }
+    .kind.j { color: var(--ot-journal); }
+    .kind.m { color: var(--ot-model); }
+    .pass-j { border-left: 3px dotted var(--ot-journal); background: var(--ot-journal-bg); border-radius: 0 10px 10px 0; padding: 12px 16px 13px; }
+    .pass-j q { display: block; quotes: "“" "”"; color: var(--ot-ink); }
+    .pass-j .foot { font-size: 12px; color: var(--ot-journal); margin-top: 6px; }
+    .pass-m { border: 1.5px dashed var(--ot-model-line); background: var(--ot-model-bg); border-radius: 10px; padding: 12px 16px 13px; }
+    .pass-m .foot { font-size: 12px; color: var(--ot-model); margin-top: 6px; }
+
+    .dots { display: flex; flex-wrap: wrap; gap: 5px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+    .dot.full { background: var(--ot-source); }
+    .dot.half { border: 1.6px solid var(--ot-source); background: linear-gradient(90deg, var(--ot-source) 50%, transparent 50%); }
+    .dot.empty { border: 1.6px dashed var(--ot-pending); }
+    .dot.gap { width: 12px; height: 2px; border-radius: 1px; background: var(--ot-ink-3); align-self: center; }
+
+    .stepper { display: grid; grid-template-columns: repeat(4, 1fr); position: relative; }
+    .stepper li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; font-size: 12px; color: var(--ot-ink-3); }
+    .stepper li::before { content: ""; position: absolute; top: 11px; left: -50%; right: 50%; height: 2px; background: var(--ot-line); }
+    .stepper li:first-child::before { display: none; }
+    .stepper li.done::before, .stepper li.now::before { background: var(--ot-ok); }
+    .stepper li.wait::before { background: repeating-linear-gradient(90deg, var(--ot-line-strong) 0 4px, transparent 4px 8px); }
+    .stepper b { position: relative; z-index: 1; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ot-line-strong); background: var(--ot-surface); display: grid; place-items: center; color: var(--ot-on-court); }
+    .stepper li.done b { background: var(--ot-ok); border-color: var(--ot-ok); }
+    .stepper li.now b { border-color: var(--ot-warn); background: var(--ot-warn-bg); }
+    .stepper li.now b::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ot-warn); }
+    .stepper li.fail b { border-color: var(--ot-danger); background: var(--ot-danger-bg); color: var(--ot-danger); }
+    .stepper b .ico { width: 14px; height: 14px; stroke-width: 2.6; }
+    .stepper span { font-size: 13px; font-weight: 600; color: var(--ot-ink); }
+    .stepper small { font-size: 12px; color: var(--ot-ink-3); line-height: 1.35; }
+    .stepper li.now small { color: var(--ot-warn); }
+    .stepper li.done small { color: var(--ot-ok); }
+
+    /* phone chrome */
+    .statusbar { height: 46px; padding: 15px 26px 0 30px; display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; color: var(--ot-ink); }
+    .statusbar .sig { display: flex; align-items: center; gap: 6px; }
+    .bars { display: flex; align-items: flex-end; gap: 2px; height: 11px; }
+    .bars i { width: 3px; background: currentColor; border-radius: 1px; }
+    .bars i:nth-child(1) { height: 4px; } .bars i:nth-child(2) { height: 6px; } .bars i:nth-child(3) { height: 8px; } .bars i:nth-child(4) { height: 11px; }
+    .bars.off i { opacity: .28; }
+    .batt { width: 24px; height: 12px; border: 1.5px solid currentColor; border-radius: 3px; padding: 1.5px; opacity: .9; }
+    .batt::before { content: ""; display: block; width: 70%; height: 100%; background: currentColor; border-radius: 1px; }
+    .ptop { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px 0 8px; border-bottom: 1px solid var(--ot-line); }
+    .ptop .back { display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 8px; font-size: 15px; color: var(--ot-ink); }
+    .pbody { padding: 20px 20px 0; }
+    .pbody h3 { font-size: 26px; line-height: 1.38; font-weight: 600; letter-spacing: -.6px; margin: 8px 0 16px; }
+    .plabel { font-size: 13px; color: var(--ot-ink-2); margin: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
+    .dock { position: absolute; left: 0; right: 0; bottom: 80px; padding: 10px 20px 12px; background: linear-gradient(to top, var(--ot-paper) 78%, transparent); z-index: 10; }
+    .dock .hint { font-size: 12px; color: var(--ot-ink-3); text-align: center; margin-top: 8px; }
+    .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; padding: 8px 8px 0; display: flex; justify-content: space-around; background: var(--ot-surface); border-top: 1px solid var(--ot-line); z-index: 12; }
+    .tabbar a { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 84px; height: 48px; justify-content: center; font-size: 12px; color: var(--ot-ink-3); }
+    .tabbar a .ico { width: 22px; height: 22px; }
+    .tabbar a.on { color: var(--ot-court); font-weight: 600; }
+    .tabbar .badge { position: absolute; top: 0; left: 49px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--ot-warn); color: #fff; font-size: 12px; font-weight: 600; line-height: 18px; text-align: center; }
+
+    /* ───────── board 00 · foundations ───────── */
+    .spec { position: absolute; width: 576px; height: 404px; background: var(--ot-surface); border: 1px solid var(--ot-line); border-radius: 14px; padding: 22px 26px; box-shadow: var(--ot-shadow-card); }
+    .spec h3 { font-size: 18px; font-weight: 600; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .spec h3 small { font: 12px var(--ot-font-mono); color: var(--ot-ink-3); letter-spacing: 1.2px; font-weight: 400; }
+    .spec .sub { font-size: 13px; color: var(--ot-ink-2); margin: 6px 0 16px; line-height: 1.6; }
+    .c1 { left: 72px; } .c2 { left: 672px; } .c3 { left: 1272px; }
+    .r1 { top: 236px; } .r2 { top: 664px; }
+    .palette { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .pal { border-radius: 10px; padding: 12px 12px 6px; border: 1px solid var(--ot-line); background: var(--ot-paper); }
+    .pal h4 { font-size: 12px; font-weight: 600; color: var(--ot-ink-2); margin-bottom: 8px; }
+    .sw { display: grid; grid-template-columns: 22px 1fr auto; gap: 9px; align-items: center; height: 29px; font: 12px var(--ot-font-mono); color: var(--ot-ink-2); }
+    .sw i { width: 22px; height: 22px; border-radius: 6px; border: 1px solid rgb(0 0 0 / .08); }
+    .sw b { font-weight: 500; color: var(--ot-ink); font-family: var(--ot-font-sans); font-size: 12px; }
+    .sw em { font-style: normal; color: var(--ot-ink-3); }
+    .sw .bad { color: var(--ot-danger); }
+    .grammar { display: flex; flex-direction: column; gap: 10px; }
+    .gram-row { display: grid; grid-template-columns: 1fr 150px; gap: 16px; align-items: center; }
+    .gram-row .cap { font-size: 12px; line-height: 1.6; color: var(--ot-ink-2); }
+    .gram-row .cap b { display: block; font-size: 13px; color: var(--ot-ink); }
+    .gram-src { font-size: 15px; line-height: 1.7; padding: 4px 0; }
+    .gram-dots { display: flex; gap: 18px; font-size: 12px; color: var(--ot-ink-2); padding-top: 8px; border-top: 1px solid var(--ot-line); }
+    .gram-dots span { display: flex; align-items: center; gap: 7px; }
+    .state-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+    .state-cols div { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+    .state-cols .chip { height: 24px; padding: 0 8px; }
+    .state-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+    .state-row > b { font-size: 12px; color: var(--ot-ink-2); font-weight: 600; width: 64px; }
+    .ladder { display: flex; flex-direction: column; gap: 7px; }
+    .ladder div { display: grid; grid-template-columns: 38px 1fr; align-items: baseline; gap: 10px; }
+    .ladder em { font: normal 12px var(--ot-font-mono); color: var(--ot-ink-3); }
+    .ladder span { white-space: nowrap; line-height: 1.25; }
+    .ladder small { font-size: 12px; color: var(--ot-ink-3); margin-left: 10px; font-weight: 400; letter-spacing: 0; }
+    .measure { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--ot-line); }
+    .ruler { position: relative; height: 22px; border-bottom: 1px solid var(--ot-ink-3); margin-bottom: 6px; }
+    .ruler i { position: absolute; bottom: 0; width: 1px; height: 7px; background: var(--ot-ink-3); }
+    .ruler i.big { height: 12px; }
+    .ruler span { position: absolute; bottom: 12px; font: 12px var(--ot-font-mono); color: var(--ot-ink-3); transform: translateX(-50%); }
+    .thumb-wrap { display: grid; grid-template-columns: 170px 1fr; gap: 26px; }
+    .mini-phone { position: relative; width: 150px; height: 266px; border: 5px solid #25312c; border-radius: 28px; overflow: hidden; background: var(--ot-surface); }
+    .zone { position: absolute; left: 0; right: 0; display: grid; place-items: center; font-size: 12px; font-weight: 600; }
+    .zone.hard { top: 0; height: 34%; background: repeating-linear-gradient(135deg, transparent 0 6px, #9e3b2712 6px 7px); color: var(--ot-danger); }
+    .zone.ok { top: 34%; height: 30%; background: #b8923a14; color: var(--ot-model); }
+    .zone.easy { top: 64%; bottom: 0; background: #2a654724; color: var(--ot-source); place-items: start center; padding-top: 10px; }
+    .mini-phone .m-cta { position: absolute; left: 10px; right: 10px; bottom: 44px; height: 22px; border-radius: 6px; background: var(--ot-court); }
+    .mini-phone .m-tab { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; border-top: 1px solid var(--ot-line-strong); background: var(--ot-surface); display: flex; justify-content: space-around; align-items: center; }
+    .mini-phone .m-tab i { width: 12px; height: 12px; border-radius: 3px; background: var(--ot-line-strong); }
+    .mini-phone .m-back { position: absolute; left: 10px; top: 16px; width: 26px; height: 12px; border-radius: 4px; border: 1px solid var(--ot-danger); }
+    .rules { display: flex; flex-direction: column; gap: 11px; font-size: 13px; line-height: 1.55; color: var(--ot-ink-2); }
+    .rules li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; }
+    .rules b { font: 600 12px var(--ot-font-mono); color: var(--ot-ink); padding-top: 1px; }
+    .delta { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .delta th { text-align: left; font: 12px var(--ot-font-mono); letter-spacing: 1px; color: var(--ot-ink-3); font-weight: 400; padding: 0 0 8px; border-bottom: 1px solid var(--ot-line-strong); }
+    .delta td { padding: 9px 8px 9px 0; border-bottom: 1px solid var(--ot-line); vertical-align: top; line-height: 1.45; }
+    .delta td:first-child { color: var(--ot-ink); font-weight: 600; width: 88px; }
+    .delta td:nth-child(2) { color: var(--ot-ink-2); width: 170px; }
+    .delta td:nth-child(3) { color: var(--ot-source); font-weight: 600; }
+    .delta tr:last-child td { border-bottom: 0; }
+
+    /* ───────── board 01 · five categories ───────── */
+    .home { display: grid; grid-template-columns: 1fr 320px; flex: 1; min-height: 0; }
+    .home-main { padding: 22px 38px 0 40px; min-width: 0; }
+    .home-main h1 { font-size: 30px; font-weight: 600; letter-spacing: -.8px; margin: 10px 0 8px; }
+    .lede { font-size: 15px; color: var(--ot-ink-2); line-height: 1.7; }
+    .legend { display: flex; gap: 18px; margin: 12px 0 10px; font-size: 12px; color: var(--ot-ink-2); }
+    .legend span { display: flex; align-items: center; gap: 7px; }
+    .toc { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 2px solid var(--ot-ink); border-bottom: 1px solid var(--ot-line-strong); }
+    .cat { padding: 14px 16px 10px; border-left: 1px solid var(--ot-line-strong); min-width: 0; position: relative; }
+    .cat:first-child { border-left: 0; padding-left: 0; }
+    .cat.pilot { background: linear-gradient(var(--ot-surface), var(--ot-surface)) padding-box; }
+    .cat header { display: flex; align-items: baseline; gap: 9px; }
+    .cat .code { font: italic 26px/1 var(--ot-font-num); color: var(--ot-ink-3); letter-spacing: -.5px; }
+    .cat .name { font-size: 20px; font-weight: 600; }
+    .cat .tagline { position: absolute; right: 14px; top: 18px; }
+    .cat .dots { margin: 11px 0 6px; min-height: 25px; max-width: 150px; }
+    .cat .count { font-size: 13px; color: var(--ot-ink-2); line-height: 1.5; min-height: 40px; }
+    .cat .count.none { color: var(--ot-ink-3); }
+    .svc { height: 1px; background: var(--ot-line-strong); margin: 10px 0 6px; }
+    .topics li { display: grid; grid-template-columns: 12px 1fr auto; align-items: center; gap: 9px; height: 33px; font-size: 14px; border-bottom: 1px dashed var(--ot-line); }
+    .topics li:last-child { border-bottom: 0; }
+    .topics li small { font: 12px var(--ot-font-mono); color: var(--ot-ink-3); }
+    .topics li.ghost { color: var(--ot-ink-3); }
+    .topics li.cur { font-weight: 600; }
+    .topics li.cur small { color: var(--ot-source); }
+    .topics li.more { grid-template-columns: 1fr; color: var(--ot-court); font-size: 13px; font-weight: 600; }
+    .topics .dot { width: 9px; height: 9px; }
+    .topics .dot.gap, .nav-sub .dot.gap { width: 10px; height: 2px; border-radius: 1px; }
+    .nb { white-space: nowrap; }
+    .registry { margin-top: 12px; }
+    .reg-h { display: flex; align-items: baseline; gap: 12px; font-size: 12px; color: var(--ot-ink-2); margin-bottom: 6px; }
+    .reg-h b { font-size: 14px; color: var(--ot-ink); }
+    .reg-h a { margin-left: auto; color: var(--ot-court); font-weight: 600; font-size: 13px; }
+    .registry table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+    .registry th { text-align: left; font: 12px var(--ot-font-mono); color: var(--ot-ink-3); font-weight: 400; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--ot-line-strong); }
+    .registry td { padding: 6px 8px 6px 0; border-bottom: 1px solid var(--ot-line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ot-ink); }
+    .registry td.unk { color: var(--ot-warn); }
+    .registry td .dot { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: -1px; }
+    .registry td.id { font: 600 12px var(--ot-font-mono); }
+    .phone-note { font-size: 12px; line-height: 1.7; color: var(--ot-ink-2); margin: 14px 20px 0; }
+    .backref { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 12px; border: 1px dashed var(--ot-line-strong); border-radius: 10px; font-size: 13px; color: var(--ot-ink-2); }
+    .runbox { margin-top: 18px; padding: 12px 14px; border: 1px solid var(--ot-line); border-radius: 10px; background: var(--ot-surface); font-size: 12px; line-height: 1.7; color: var(--ot-ink-2); }
+    .runbox b { display: block; font: 12px var(--ot-font-mono); letter-spacing: 1.2px; color: var(--ot-ink-3); font-weight: 400; margin-bottom: 4px; }
+
+    .add-src { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; color: var(--ot-court); font-weight: 600; height: 32px; }
+    .cross { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; font-size: 13px; color: var(--ot-ink-2); }
+    .cross b { font-weight: 600; color: var(--ot-ink); margin-right: 4px; }
+    .xchip { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 11px; border: 1px solid var(--ot-line-strong); border-radius: 8px; background: var(--ot-surface); font-size: 13px; color: var(--ot-ink); }
+    .xchip small { font: 12px var(--ot-font-mono); color: var(--ot-ink-3); }
+    .home-rail { background: var(--ot-rail); border-left: 1px solid var(--ot-line); padding: 24px 22px; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+    .rail-h { font: 12px var(--ot-font-mono); letter-spacing: 1.4px; color: var(--ot-ink-3); display: flex; justify-content: space-between; margin-bottom: 9px; }
+    .card { background: var(--ot-surface); border: 1px solid var(--ot-line); border-radius: 12px; padding: 14px 15px; }
+    .card h4 { font-size: 15px; font-weight: 600; margin: 5px 0 7px; line-height: 1.45; }
+    .card p { font-size: 12px; color: var(--ot-ink-2); line-height: 1.6; }
+    .list-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--ot-line); font-size: 13px; }
+    .list-row:last-child { border-bottom: 0; }
+    .list-row small { display: block; font-size: 12px; color: var(--ot-ink-3); margin-top: 3px; }
+    .list-row .warnline { color: var(--ot-warn); }
+    .gap-note { font-size: 12px; color: var(--ot-ink-2); margin-top: 8px; line-height: 1.6; }
+
+    /* board 01 phone */
+    .offline-band { display: flex; align-items: center; gap: 8px; padding: 9px 20px; font-size: 13px; font-weight: 500; color: var(--ot-warn); background: var(--ot-warn-bg); border-bottom: 1px solid var(--ot-model-line); }
+    .phead { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 0 20px; }
+    .phead h3 { font-size: 28px; font-weight: 600; letter-spacing: -.6px; }
+    .cont { margin: 14px 20px 0; }
+    .cat-rows { margin: 0 20px; border-top: 2px solid var(--ot-ink); }
+    .cat-row { display: grid; grid-template-columns: 40px 1fr auto 16px; align-items: center; gap: 10px; min-height: 68px; border-bottom: 1px solid var(--ot-line); }
+    .cat-row .code { font: italic 21px/1 var(--ot-font-num); color: var(--ot-ink-3); }
+    .cat-row b { display: block; font-size: 17px; font-weight: 600; }
+    .cat-row small { display: block; font-size: 12px; color: var(--ot-ink-2); margin-top: 4px; }
+    .cat-row .side { font-size: 12px; color: var(--ot-ink-3); text-align: right; }
+    .cat-row .side.saved { color: var(--ot-ok); font-weight: 600; }
+    .cat-row.na b { color: var(--ot-ink-2); }
+    .cat-row .ico { color: var(--ot-ink-3); }
+
+    /* ───────── board 02 · reader ───────── */
+    .reader { display: grid; grid-template-columns: 232px minmax(0, 1fr) 376px; flex: 1; min-height: 0; }
+    .lrail { background: var(--ot-rail); border-right: 1px solid var(--ot-line); padding: 18px 12px; display: flex; flex-direction: column; min-width: 0; }
+    .lrail .mini-search { height: 36px; border: 1px solid var(--ot-line); border-radius: 8px; display: flex; align-items: center; gap: 8px; padding: 0 10px; font-size: 13px; color: var(--ot-ink-3); margin: 0 4px 16px; }
+    .lrail .rh { font: 12px var(--ot-font-mono); letter-spacing: 1.4px; color: var(--ot-ink-3); margin: 6px 8px 6px; }
+    .nav-cat { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 6px; height: 36px; padding: 0 8px; border-radius: 7px; font-size: 14px; color: var(--ot-ink-2); }
+    .nav-cat .code { font: italic 14px var(--ot-font-num); color: var(--ot-ink-3); }
+    .nav-cat small { font: 12px var(--ot-font-mono); color: var(--ot-ink-3); }
+    .nav-cat.open { color: var(--ot-ink); font-weight: 600; }
+    .nav-sub { margin: 2px 0 6px 20px; border-left: 1px solid var(--ot-line-strong); }
+    .nav-sub a { display: grid; grid-template-columns: 12px 1fr; align-items: center; gap: 8px; min-height: 34px; padding: 0 8px 0 12px; font-size: 13px; color: var(--ot-ink-2); border-radius: 0 7px 7px 0; }
+    .nav-sub a.on { background: var(--ot-court-soft); color: var(--ot-ink); font-weight: 600; box-shadow: inset 2px 0 0 var(--ot-court); }
+    .nav-sub .dot { width: 8px; height: 8px; }
+    .lrail .foot { margin-top: auto; padding: 14px 8px 2px; border-top: 1px solid var(--ot-line); font-size: 12px; line-height: 1.7; color: var(--ot-ink-2); }
+    .lrail .foot b { color: var(--ot-ink); font-weight: 600; display: block; }
+    .reading { padding: 26px 0 0 56px; min-width: 0; overflow: hidden; }
+    .reading .col { max-width: 612px; }
+    .crumb { font-size: 13px; color: var(--ot-ink-3); display: flex; align-items: center; gap: 8px; }
+    .reading .chips { display: flex; gap: 8px; margin: 12px 0 0; flex-wrap: wrap; }
+    .reading h1 { font-size: 30px; font-weight: 600; letter-spacing: -.8px; line-height: 1.35; margin: 14px 0 12px; }
+    .figure { border: 1px solid var(--ot-line); border-radius: 10px; padding: 6px 10px 0; margin: 4px 0 4px; background: var(--ot-surface); }
+    .figure svg { display: block; width: 100%; height: 108px; }
+    .body17 { font-size: 17px; line-height: 1.8; color: var(--ot-ink); }
+    .reading h2 { font-size: 19px; font-weight: 600; margin: 16px 0 6px; letter-spacing: -.2px; }
+    .reading .pass-j, .reading .pass-m { margin-top: 12px; font-size: 15px; line-height: 1.7; }
+    .reading .acts { display: flex; gap: 10px; margin-top: 16px; }
+    .epanel { background: var(--ot-surface); border-left: 1px solid var(--ot-line); display: flex; flex-direction: column; min-width: 0; }
+    .etabs { display: flex; gap: 22px; padding: 0 20px; height: 48px; align-items: stretch; border-bottom: 1px solid var(--ot-line); font-size: 14px; color: var(--ot-ink-2); }
+    .etabs span { display: flex; align-items: center; gap: 6px; position: relative; }
+    .etabs .on { color: var(--ot-ink); font-weight: 600; }
+    .etabs .on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--ot-court); }
+    .etabs small { font: 12px var(--ot-font-mono); color: var(--ot-ink-3); }
+    .elist { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+    .loc { border: 1px solid var(--ot-line); border-radius: 12px; background: var(--ot-paper); padding: 12px 14px; }
+    .loc.sel { border-color: var(--ot-source); background: var(--ot-surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ot-source) 16%, transparent); }
+    .loc.pend { border-style: dashed; border-color: var(--ot-model-line); background: repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, var(--ot-pending) 7%, transparent) 6px 7px), var(--ot-paper); }
+    .loc.jr { border-left: 3px dotted var(--ot-journal); }
+    .loc-h { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ot-ink-2); }
+    .loc-h .st { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+    .loc-h .st.ok { color: var(--ot-ok); }
+    .loc-h .st.pd { color: var(--ot-pending); }
+    .loc-h .st.jr { color: var(--ot-journal); }
+    .loc h5 { font-size: 15px; font-weight: 600; margin: 8px 0 3px; line-height: 1.4; }
+    .loc h5 small { font-size: 12px; font-weight: 400; color: var(--ot-ink-3); margin-left: 4px; }
+    .loc .where { font: 12px var(--ot-font-mono); color: var(--ot-ink-2); }
+    .loc .one { font-size: 12px; color: var(--ot-ink-2); margin-top: 5px; line-height: 1.55; }
+    .chain { display: flex; align-items: center; margin: 12px 0 10px; font-size: 12px; color: var(--ot-ink-2); }
+    .chain .node { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .chain .node i { width: 8px; height: 8px; border-radius: 50%; border: 1.6px solid var(--ot-source); }
+    .chain .node.on i { background: var(--ot-source); }
+    .chain .node.on { color: var(--ot-ink); font-weight: 600; }
+    .chain .edge { flex: 1; height: 1.5px; background: var(--ot-source); margin: 0 6px; min-width: 12px; }
+    .chain .edge.broken { background: repeating-linear-gradient(90deg, var(--ot-danger) 0 3px, transparent 3px 6px); }
+    .excerpt { font-size: 14px; line-height: 1.75; color: var(--ot-ink); padding: 9px 12px; border-left: 2px solid var(--ot-source); background: var(--ot-source-bg); border-radius: 0 8px 8px 0; }
+    .loc .meta { font-size: 12px; color: var(--ot-ink-3); margin-top: 8px; }
+    .loc .row2 { display: flex; gap: 8px; margin-top: 10px; }
+    .loc .row2 .btn { height: 36px; font-size: 13px; padding: 0 12px; flex: 1; }
+    .ask { margin: 0 16px 16px; border: 1px solid var(--ot-line-strong); border-radius: 12px; padding: 12px 12px 10px; background: var(--ot-paper); }
+    .ask .q { font-size: 14px; color: var(--ot-ink-3); display: flex; justify-content: space-between; align-items: center; }
+    .ask .send { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--ot-court); color: var(--ot-on-court); }
+    .ask .perm { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--ot-line); font-size: 12px; color: var(--ot-ink-2); }
+    .toggle { width: 30px; height: 18px; border-radius: 9px; background: var(--ot-sunken); border: 1px solid var(--ot-line-strong); position: relative; flex: 0 0 auto; }
+    .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--ot-ink-3); }
+
+    /* board 02 phone · sheet */
+    .behind { position: absolute; inset: 0; }
+    .behind .pbody h3 { font-size: 25px; }
+    .scrim { position: absolute; inset: 0; background: var(--ot-scrim); z-index: 20; }
+    .sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 548px; background: var(--ot-surface); border-radius: 20px 20px 0 0; box-shadow: var(--ot-shadow-sheet); z-index: 25; padding: 8px 20px 0; }
+    .sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--ot-line-strong); margin: 0 auto 10px; }
+    .sheet .loc-h { font-size: 13px; }
+    .sheet h5 { font-size: 19px; font-weight: 600; margin: 10px 0 4px; }
+    .sheet .x { margin-left: 8px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--ot-sunken); color: var(--ot-ink-2); }
+    .sheet .excerpt { font-size: 15px; }
+    .sheet .row2 { display: flex; gap: 10px; margin-top: 14px; }
+    .sheet .row2 .btn { flex: 1; }
+    .pager { position: absolute; left: 12px; right: 12px; bottom: 30px; display: flex; justify-content: space-between; align-items: center; height: 52px; border-top: 1px solid var(--ot-line); padding-top: 4px; }
+    .pager a { display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 12px; font-size: 15px; font-weight: 600; color: var(--ot-court); }
+    .pager span { font: 13px var(--ot-font-mono); color: var(--ot-ink-3); }
+
+    /* ───────── board 03 · review ───────── */
+    .review { display: grid; grid-template-columns: 248px minmax(0, 1fr) 344px; flex: 1; min-height: 0; }
+    .vline { background: var(--ot-rail); border-right: 1px solid var(--ot-line); padding: 22px 18px; display: flex; flex-direction: column; min-width: 0; }
+    .vline h4 { font-size: 14px; font-weight: 600; margin: 6px 0 16px; line-height: 1.5; }
+    .ver { position: relative; padding: 0 0 18px 26px; }
+    .ver::before { content: ""; position: absolute; left: 7px; top: 18px; bottom: 0; width: 1.5px; background: var(--ot-line-strong); }
+    .ver:last-of-type::before { display: none; }
+    .ver .pin { position: absolute; left: 0; top: 3px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ot-source); background: var(--ot-surface); }
+    .ver.pub .pin { background: var(--ot-source); }
+    .ver.draft .pin { border-style: dashed; border-color: var(--ot-pending); }
+    .ver .box { border-radius: 10px; padding: 10px 11px; margin: -6px 0 0 -8px; }
+    .ver.sel .box { background: var(--ot-surface); border: 1px dashed var(--ot-model-line); }
+    .ver b { font: 600 14px var(--ot-font-mono); }
+    .ver .st { font-size: 12px; margin-left: 6px; font-weight: 600; }
+    .ver p { font-size: 12px; color: var(--ot-ink-2); margin-top: 4px; line-height: 1.55; }
+    .vline .foot { margin-top: auto; font-size: 12px; line-height: 1.7; color: var(--ot-ink-2); border-top: 1px solid var(--ot-line); padding-top: 12px; }
+    .diff { padding: 24px 34px 0 36px; min-width: 0; overflow: hidden; }
+    .diff h1 { font-size: 26px; font-weight: 600; letter-spacing: -.6px; margin: 10px 0 12px; }
+    .diff .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .seg { display: inline-flex; border: 1px solid var(--ot-line-strong); border-radius: 9px; padding: 3px; background: var(--ot-sunken); margin: 16px 0 12px; }
+    .seg span { height: 32px; display: flex; align-items: center; padding: 0 14px; font-size: 13px; border-radius: 6px; color: var(--ot-ink-2); }
+    .seg .on { background: var(--ot-surface); color: var(--ot-ink); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+    .folded { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px dashed var(--ot-line-strong); border-radius: 8px; font-size: 13px; color: var(--ot-ink-2); }
+    .dblock { margin-top: 12px; border: 1px solid var(--ot-line); border-radius: 12px; background: var(--ot-surface); overflow: hidden; }
+    .dblock header { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--ot-line); font-size: 13px; color: var(--ot-ink-2); background: var(--ot-paper); }
+    .dblock header .sig { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font: 700 14px var(--ot-font-mono); }
+    .sig.mod { background: var(--ot-warn-bg); color: var(--ot-warn); }
+    .sig.add { background: var(--ot-ok-bg); color: var(--ot-ok); }
+    .sig.del { background: var(--ot-danger-bg); color: var(--ot-danger); }
+    .sig.same { background: var(--ot-sunken); color: var(--ot-ink-2); }
+    .dblock .txt { padding: 12px 16px 13px; font-size: 16px; line-height: 1.85; }
+    del { color: var(--ot-danger); background: var(--ot-danger-bg); text-decoration: line-through; text-decoration-thickness: 1.5px; padding: 1px 0; border-radius: 3px; }
+    ins { color: var(--ot-ok); background: var(--ot-ok-bg); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 4px; padding: 1px 0; border-radius: 3px; }
+    .flag { display: flex; gap: 8px; align-items: flex-start; padding: 9px 14px; font-size: 13px; line-height: 1.55; border-top: 1px solid var(--ot-line); }
+    .flag.danger { color: var(--ot-danger); background: var(--ot-danger-bg); }
+    .flag.warn { color: var(--ot-warn); background: var(--ot-warn-bg); }
+    .flag .ico { margin-top: 1px; }
+    .conflict { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--ot-line-strong); border-radius: 12px; overflow: hidden; }
+    .conflict > div { padding: 11px 14px; font-size: 13px; line-height: 1.65; }
+    .conflict > div + div { border-left: 1px solid var(--ot-line-strong); }
+    .conflict h6 { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: var(--ot-ink-2); display: flex; align-items: center; gap: 6px; }
+    .conflict .note { grid-column: 1 / -1; border-top: 1px solid var(--ot-line-strong); border-left: 0 !important; background: var(--ot-paper); color: var(--ot-ink-2); font-size: 12px; padding: 8px 14px; }
+    .checks { background: var(--ot-rail); border-left: 1px solid var(--ot-line); padding: 24px 22px; display: flex; flex-direction: column; min-width: 0; }
+    .checks h4 { font-size: 18px; font-weight: 600; }
+    .checks .sub { font-size: 13px; color: var(--ot-ink-2); margin: 6px 0 14px; }
+    .ck { display: grid; grid-template-columns: 24px 1fr; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--ot-line); }
+    .ck .b { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--ot-line-strong); display: grid; place-items: center; background: var(--ot-surface); }
+    .ck.pass .b { background: var(--ot-ok); border-color: var(--ot-ok); color: #fff; }
+    .ck.fail .b { border-color: var(--ot-danger); color: var(--ot-danger); background: var(--ot-danger-bg); }
+    .ck.wait .b { border-color: var(--ot-warn); color: var(--ot-warn); background: var(--ot-warn-bg); }
+    .ck .b .ico { width: 14px; height: 14px; stroke-width: 2.6; }
+    .ck b { font-size: 14px; font-weight: 600; display: block; line-height: 1.4; }
+    .ck small { display: block; font-size: 12px; margin-top: 3px; color: var(--ot-ink-2); }
+    .ck.fail small { color: var(--ot-danger); }
+    .ck.wait small { color: var(--ot-warn); }
+    .checks .acts { display: flex; flex-direction: column; gap: 9px; margin-top: 18px; }
+    .reason { font-size: 12px; color: var(--ot-ink-3); text-align: center; margin: -3px 0 2px; }
+    .checks .foot { margin-top: auto; font-size: 12px; color: var(--ot-ink-2); line-height: 1.7; }
+
+    /* board 03 phone */
+    .chg { border: 1px solid var(--ot-line); border-radius: 12px; background: var(--ot-surface); padding: 12px 14px; margin-bottom: 10px; }
+    .chg .h { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; color: var(--ot-ink); }
+    .chg .h .sig { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font: 700 14px var(--ot-font-mono); }
+    .chg p { font-size: 15px; line-height: 1.7; margin-top: 8px; }
+    .chg .src { font-size: 12px; margin-top: 7px; display: flex; align-items: center; gap: 6px; color: var(--ot-journal); }
+    .chg.m { border: 1.5px dashed var(--ot-model-line); background: var(--ot-model-bg); }
+    .chg.m .src { color: var(--ot-model); }
+    .guard { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--ot-ok); padding: 10px 12px; border-radius: 10px; background: var(--ot-ok-bg); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+    /* ───────── board 04 · mobile chain ───────── */
+    .ph1 { left: 104px; } .ph2 { left: 545px; } .ph3 { left: 986px; } .ph4 { left: 1427px; }
+    .lb1 { left: 104px; } .lb2 { left: 545px; } .lb3 { left: 986px; } .lb4 { left: 1427px; }
+    .basis { display: flex; gap: 6px; flex-wrap: wrap; }
+    .basis .chip { height: 30px; font-size: 13px; }
+    .drills { margin-top: 4px; }
+    .drills li { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; min-height: 46px; gap: 8px; border-top: 1px dashed var(--ot-model-line); font-size: 14px; }
+    .drills li:first-child { border-top: 0; }
+    .drills .n { font: italic 18px var(--ot-font-num); color: var(--ot-model); }
+    .drills .d { font: 12px var(--ot-font-mono); color: var(--ot-ink-2); }
+    .step { display: flex; align-items: center; gap: 14px; min-height: 74px; padding: 12px 14px; border: 1px solid var(--ot-line); border-radius: 14px; background: var(--ot-surface); margin-bottom: 10px; }
+    .step .c { width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--ot-line-strong); display: grid; place-items: center; flex: 0 0 auto; color: #fff; }
+    .step.done { background: var(--ot-ok-bg); border-color: color-mix(in srgb, var(--ot-ok) 30%, transparent); }
+    .step.done .c { background: var(--ot-ok); border-color: var(--ot-ok); }
+    .step .c .ico { width: 18px; height: 18px; stroke-width: 2.6; }
+    .step b { display: block; font-size: 15px; font-weight: 600; }
+    .step small { display: block; font-size: 12px; color: var(--ot-ink-2); margin-top: 4px; }
+    .pick { display: flex; gap: 6px; }
+    .pick span { flex: 1; height: 44px; display: grid; place-items: center; border: 1px solid var(--ot-line-strong); border-radius: 10px; font-size: 14px; color: var(--ot-ink-2); background: var(--ot-surface); }
+    .pick .on { background: var(--ot-court-soft); border-color: var(--ot-court); color: var(--ot-ink); font-weight: 600; }
+    .textarea { border: 1px solid var(--ot-line-strong); border-radius: 12px; background: var(--ot-surface); padding: 12px 14px; font-size: 15px; line-height: 1.7; min-height: 98px; }
+    .textarea .cnt { display: block; text-align: right; font: 12px var(--ot-font-mono); color: var(--ot-ink-3); margin-top: 2px; }
+    .offline-note { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.6; color: var(--ot-warn); margin-top: 12px; }
+    .receipt { font: 12px var(--ot-font-mono); color: var(--ot-ink-2); text-align: center; margin-top: 10px; }
+
+    @media print { body { background: #fff; } .gallery-head { display: none; } .stage { margin: 0; break-after: page; } }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M3 4.5h6c2 0 3 1 3 2 0-1 1-2 3-2h6v14h-6c-2 0-3 1-3 2 0-1-1-2-3-2H3Z"/><path d="M12 6.5v14"/></symbol>
+      <symbol id="i-court" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx=".5"/><path d="M7 2.5v19M17 2.5v19M4 12h16M7 7h10M7 17h10M12 7v10"/></symbol>
+      <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16Z"/><path d="m13.5 6.5 4 4M14 20h6"/></symbol>
+      <symbol id="i-note" viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="M7 17 17 7M8.5 7H17v8.5"/></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+      <symbol id="i-chevd" viewBox="0 0 24 24"><path d="m5 9 7 7 7-7"/></symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 8 3-3a4 4 0 0 1 6 6l-3 3M14 16l-3 3a4 4 0 0 1-6-6l3-3M8.5 15.5l7-7"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5 2.5 20h19Z"/><path d="M12 10v4.5M12 17.2v.3"/></symbol>
+      <symbol id="i-ask" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.4v.6M12 16.8v.3"/></symbol>
+      <symbol id="i-offline" viewBox="0 0 24 24"><path d="M2.5 8.5a14 14 0 0 1 6-3M12 5a14 14 0 0 1 9.5 3.5M5.5 12a9.5 9.5 0 0 1 3.8-2.3M15.5 10.2A9.5 9.5 0 0 1 18.5 12M9 15.5a4.8 4.8 0 0 1 6 0M12 19h.01M3 3l18 18"/></symbol>
+      <symbol id="i-online" viewBox="0 0 24 24"><path d="M2.5 8.5a14 14 0 0 1 19 0M5.5 12a9.5 9.5 0 0 1 13 0M9 15.5a4.8 4.8 0 0 1 6 0M12 19h.01"/></symbol>
+      <symbol id="i-device" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18h2"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m10.5 9 4.5 3-4.5 3Z"/></symbol>
+      <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8M12 8v4l3 2"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.3 3 7.6 7 9.5 4-1.9 7-5.2 7-9.5V6Z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></symbol>
+      <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6.5 3h11v18l-5.5-4-5.5 4Z"/></symbol>
+      <symbol id="i-save" viewBox="0 0 24 24"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"/></symbol>
+      <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></symbol>
+      <symbol id="brand-ot" viewBox="0 0 64 64">
+        <path d="M41 19A19 19 0 1 0 42 47" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="square"/>
+        <path d="M29 12h23M41 12v22" fill="none" stroke="currentColor" stroke-width="6"/>
+        <path d="M7 55Q23 30 52 22" fill="none" stroke="#c4a34b" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="54" cy="12" r="4.5" fill="#c4a34b"/>
+      </symbol>
+      <!-- slice side view: racket path high → low, ball crosses net low -->
+      <symbol id="slice-side" viewBox="0 0 600 120">
+        <g fill="none" stroke="var(--ot-ink-3)" stroke-width="1">
+          <path d="M14 104h572"/>
+          <path d="M300 104V76" stroke-width="2"/>
+          <path d="M293 76h14" stroke-width="2"/>
+        </g>
+        <g fill="none" stroke="var(--ot-ink-3)" stroke-width="1" opacity=".5"><path d="M293 83h14M293 90h14M293 97h14M296.5 76v28M303.5 76v28"/></g>
+        <path d="M84 72Q300 34 548 98" fill="none" stroke="var(--ot-source)" stroke-width="2" stroke-dasharray="6 6"/>
+        <circle cx="84" cy="72" r="5.5" fill="var(--ot-source)"/>
+        <path d="M44 30Q66 58 106 80" fill="none" stroke="var(--ot-gold)" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="m96 82 10-2-6-8" fill="none" stroke="var(--ot-gold)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <g stroke="var(--ot-journal)" stroke-width="1.4" fill="none"><path d="M318 63v12M313 63h10M313 75h10"/></g>
+        <g font-family="ui-monospace, Menlo, monospace" font-size="12" fill="var(--ot-ink-3)">
+          <text x="14" y="16">SIDE VIEW / 示意，非测量</text>
+          <text x="118" y="38">拍头 高 → 低，向前送出</text>
+          <text x="328" y="50" fill="var(--ot-journal)">只观察：过网高度</text>
+          <text x="468" y="66">低而平的弧线</text>
+        </g>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="gallery-head">
+    <div>
+      <h1>Open Tennis / 球场页边 · 视觉稿 v2</h1>
+      <p>在 v1（A 阅读器 + D 手机闭环）基础上修订：统一 token、36 字行长、行内证据标记、版本差异、草稿与提交状态，以及正手 / 反手 / 截击 / 发球 / 切削五类入口。以“切削”为纵向链路验证。原创静态稿，不连接后端；示例来源与技术要点均为占位，不是训练建议。</p>
+    </div>
+    <nav aria-label="画布导航">
+      <a href="#foundations">00 基准</a>
+      <a href="#catalog">01 五类目录</a>
+      <a href="#reader">02 主题阅读</a>
+      <a href="#review">03 版本差异</a>
+      <a href="#loop">04 手机链路</a>
+      <a href="../visual-v1/mvp-directions.html">v1 原稿</a>
+      <a href="design-philosophy-v2.md">设计说明</a>
+    </nav>
+  </header>
+
+  <!-- ═════════════════════════ 00 · FOUNDATIONS ═════════════════════════ -->
+  <div class="stage">
+    <section class="board" id="foundations" aria-label="00 设计基准">
+      <header class="sheet-head">
+        <div class="sheet-eyebrow">OPEN TENNIS / COURT MARGIN · V2</div>
+        <h2>证据有形，状态诚实。</h2>
+        <p>设计基准 · 一套 token 同时服务网页、手机与深色阅读；资料、本人记录、模型补充与未同步状态，一眼可辨</p>
+        <div class="sheet-index">00</div>
+        <div class="sheet-badge">FOUNDATIONS / 先于页面</div>
+      </header>
+
+      <!-- colors -->
+      <div class="spec c1 r1">
+        <h3>色彩 · 一套 token，两种光线 <small>COLOR</small></h3>
+        <p class="sub">文字色在纸色、正文底、导航底上都 ≥ 4.5:1。金色只画品牌与球路，不写字。</p>
+        <div class="palette">
+          <div class="pal">
+            <h4>浅色 · 球场日光（默认）</h4>
+            <div class="sw"><i style="background:#f3f2ea"></i><b>paper</b><em>#F3F2EA</em></div>
+            <div class="sw"><i style="background:#fbfaf4"></i><b>surface</b><em>#FBFAF4</em></div>
+            <div class="sw"><i style="background:#1e3228"></i><b>ink</b><em>12.1 : 1</em></div>
+            <div class="sw"><i style="background:#475a4d"></i><b>ink-2</b><em>6.6 : 1</em></div>
+            <div class="sw"><i style="background:#5f6e63"></i><b>ink-3 · 最淡文字</b><em>4.8 : 1</em></div>
+            <div class="sw"><i style="background:#2e5c45"></i><b>court · 主操作</b><em>7.7 : 1</em></div>
+            <div class="sw"><i style="background:#b8923a"></i><b>gold · 仅装饰</b><em class="bad">2.6 ✕ 文字</em></div>
+          </div>
+          <div class="pal" data-theme="dark" style="background:var(--ot-paper)">
+            <h4>深色 · 夜间阅读（可选）</h4>
+            <div class="sw"><i style="background:#131c1a"></i><b>paper</b><em>#131C1A</em></div>
+            <div class="sw"><i style="background:#18231f"></i><b>surface</b><em>#18231F</em></div>
+            <div class="sw"><i style="background:#e3e9de"></i><b>ink</b><em>14.1 : 1</em></div>
+            <div class="sw"><i style="background:#b3c0b3"></i><b>ink-2</b><em>9.2 : 1</em></div>
+            <div class="sw"><i style="background:#8fa093"></i><b>ink-3 · 最淡文字</b><em>6.3 : 1</em></div>
+            <div class="sw"><i style="background:#d4e89a"></i><b>lime · 主操作</b><em>11.9 : 1</em></div>
+            <div class="sw"><i style="background:#dcc376"></i><b>gold · 仅装饰</b><em>品牌</em></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- evidence grammar -->
+      <div class="spec c2 r1">
+        <h3>证据语法 · 四重编码 <small>EVIDENCE</small></h3>
+        <p class="sub">颜色、线型、标记字母、文字标签同时区分；只看灰度也读得出来。</p>
+        <div class="grammar">
+          <div class="gram-row">
+            <div class="gram-src">拍面略微打开，<span class="hl">击球点在身体侧前方</span><span class="mk sel">S1</span></div>
+            <div class="cap"><b class="kind s"><svg class="ico"><use href="#i-doc"/></svg>资料支持</b>正文 + 行内 S 标记；选中时加实线下划线</div>
+          </div>
+          <div class="gram-row">
+            <div class="pass-j" style="font-size:14px;line-height:1.6"><q>低球切过去总是飘高。</q><div class="foot">J7 · 原话，未改写</div></div>
+            <div class="cap"><b class="kind j"><svg class="ico"><use href="#i-user"/></svg>本人记录</b>点线；主观观察，不作技术证据</div>
+          </div>
+          <div class="gram-row">
+            <div class="pass-m" style="font-size:14px;line-height:1.6">先慢速对切，只看过网高度。<div class="foot">未经知识库核验</div></div>
+            <div class="cap"><b class="kind m"><svg class="ico"><use href="#i-spark"/></svg>模型补充</b>虚线框；没有引用标记</div>
+          </div>
+          <div class="gram-dots">
+            <span><i class="dot full"></i>已审阅 · 来源完整</span>
+            <span><i class="dot half"></i>已导入 · 来源信息待补</span>
+            <span><i class="dot empty"></i>待审阅 · 不进正式回答</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- state vocabulary -->
+      <div class="spec c3 r1">
+        <h3>状态词汇 · 保存 ≠ 提交 ≠ 整理 <small>STATE</small></h3>
+        <p class="sub">四段各自报告，任何一段失败都不被下一段的“成功”盖住。</p>
+        <ol class="stepper">
+          <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>本机草稿</span></li>
+          <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>已提交</span></li>
+          <li class="now"><b></b><span>Agent 整理</span></li>
+          <li class="wait"><b></b><span>Wiki 更新</span></li>
+        </ol>
+        <div class="state-cols">
+          <div><span class="chip warn">未保存输入</span><span class="chip"><svg class="ico"><use href="#i-device"/></svg>已存本机</span><span class="chip warn"><svg class="ico"><use href="#i-lock"/></svg>已锁定·等回执</span></div>
+          <div><span class="chip ok"><svg class="ico"><use href="#i-check"/></svg>回执 J8</span><span class="chip warn"><svg class="ico"><use href="#i-offline"/></svg>离线·待确认</span></div>
+          <div><span class="chip"><svg class="ico"><use href="#i-clock"/></svg>排队</span><span class="chip">整理中…</span><span class="chip warn"><svg class="ico"><use href="#i-ask"/></svg>需要你确认</span><span class="chip danger"><svg class="ico"><use href="#i-alert"/></svg>失败·原话仍在</span></div>
+          <div><span class="chip ok">已更新 v4</span><span class="chip pending">技术改动待审</span></div>
+        </div>
+        <div class="state-row"><b>Wiki 页面</b><span class="chip ok">已发布 v3</span><span class="chip pending">草稿 · 未发布</span><span class="chip warn">有待审阅改动</span><span class="chip danger">索引失败</span></div>
+        <div class="state-row"><b>连接</b><span class="chip ok"><i class="led"></i>在线</span><span class="chip warn"><svg class="ico"><use href="#i-offline"/></svg>离线 · 只读已保存</span><span class="chip">Agent 未启用</span></div>
+      </div>
+
+      <!-- type & measure -->
+      <div class="spec c1 r2">
+        <h3>字号与行长 <small>TYPE</small></h3>
+        <p class="sub">最小 12px；正文 17px、行高 1.8、每行约 36 字。编号用衬线斜体，元信息用等宽。</p>
+        <div class="ladder">
+          <div><em>40</em><span style="font-size:40px;font-weight:600;letter-spacing:-1.2px">反手切削<small>桌面页题</small></span></div>
+          <div><em>30</em><span style="font-size:30px;font-weight:600;letter-spacing:-.8px">让球低而稳<small>主题标题</small></span></div>
+          <div><em>21</em><span style="font-size:21px;font-weight:600">先看拍面，再看旋转<small>小节</small></span></div>
+          <div><em>17</em><span style="font-size:17px">拍面略微打开，击球点在身体侧前方。<small>正文</small></span></div>
+          <div><em>15</em><span style="font-size:15px">采用这张卡 · 离线保存<small>界面</small></span></div>
+          <div><em>13</em><span style="font-size:13px;color:var(--ot-ink-2)">已发布 v3 · 2 份已审阅来源<small>元信息</small></span></div>
+          <div><em>12</em><span style="font-size:12px;color:var(--ot-ink-3)">原话，未改写 · 未经知识库核验<small>最小，仍 ≥ 4.5:1</small></span></div>
+        </div>
+      </div>
+
+      <!-- thumb -->
+      <div class="spec c2 r2">
+        <h3>拇指区与触控 <small>REACH</small></h3>
+        <p class="sub">常用动作放在下方易达区；低频、需确认的动作放远一点。</p>
+        <div class="thumb-wrap">
+          <div class="mini-phone">
+            <div class="zone hard">难达</div>
+            <div class="zone ok">可达</div>
+            <div class="zone easy">易达</div>
+            <span class="m-back"></span>
+            <span class="m-cta"></span>
+            <div class="m-tab"><i></i><i></i><i></i><i></i></div>
+          </div>
+          <ul class="rules">
+            <li><b>52 px</b><span>主操作按钮，固定在标签栏上方</span></li>
+            <li><b>44 px</b><span>所有可点目标的最小边长，包括勾选、情境与感受标签</span></li>
+            <li><b>底部</b><span>来源抽屉的翻页与关闭；阅读时单手即可切换 S1 → S2</span></li>
+            <li><b>上方</b><span>返回、回退版本、清除本机数据；回退和清除需二次确认</span></li>
+            <li><b>常驻</b><span>离线、本机草稿、未提交数量显示在顶栏或标签角标，不藏进菜单</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- delta -->
+      <div class="spec c3 r2">
+        <h3>从 v1 与现有界面学到的 <small>MEASURED</small></h3>
+        <p class="sub">数值实测自 v1 画布与 guoqing 分支的 globals.css。</p>
+        <table class="delta">
+          <thead><tr><th>项目</th><th>v1 稿 / 现有应用</th><th>v2</th></tr></thead>
+          <tbody>
+            <tr><td>色值</td><td>272 个 / 121 个散落色值</td><td>1 套 token（浅 + 深）</td></tr>
+            <tr><td>辅助文字</td><td>对比度 2.8–3.5 : 1</td><td>全部 ≥ 4.5 : 1</td></tr>
+            <tr><td>最小字号</td><td>9–10px；应用 17 处 &lt; 12px</td><td>12px</td></tr>
+            <tr><td>正文行长</td><td>约 50 / 52–56 字</td><td>约 36 字</td></tr>
+            <tr><td>引用</td><td>段落级来源块 + 版本哈希</td><td>行内 S / J 标记 + 证据链</td></tr>
+            <tr><td>分类</td><td>无；一份文件一页</td><td>五类目录 + 跨类主题</td></tr>
+            <tr><td>状态</td><td>分散的提示句</td><td>四段流水线 + 固定词汇</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="sheet-footer">
+        <div class="flow"><span>token</span><span class="arr">→</span><span>组件</span><span class="arr">→</span><span>页面</span><span class="arr">→</span><span>用“切削”链路验证</span></div>
+        <div class="sample-note"><strong>规范稿，尚未落地到应用代码</strong><br>token 源文件：frontend/src/app/tokens.css</div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ═════════════════════════ 01 · CATALOG ═════════════════════════ -->
+  <div class="stage">
+    <section class="board" id="catalog" aria-label="01 五类目录">
+      <header class="sheet-head">
+        <div class="sheet-eyebrow">OPEN TENNIS / COURT MARGIN · V2</div>
+        <h2>五类技术，一张目录。</h2>
+        <p>知识首页 · 每一类都通向主题页和可定位的来源；没有资料的地方直接写明，不用好看的卡片填满</p>
+        <div class="sheet-index">01</div>
+        <div class="sheet-badge">KNOWLEDGE / 五类入口</div>
+      </header>
+      <div class="device-label" style="left:72px">01 / WEB <span>目录、缺口与待审阅</span></div>
+      <div class="device-label" style="left:1457px">01 / PWA <span>离线时只列已保存内容</span></div>
+
+      <div class="web-frame">
+        <div class="app">
+          <header class="topbar">
+            <span class="brand"><svg class="mark"><use href="#brand-ot"/></svg>open <em>tennis</em><span class="private">PRIVATE</span></span>
+            <nav class="tabs"><a class="on">知识</a><a>训练</a><a>记录</a><a>我的 Wiki</a></nav>
+            <div class="search"><svg class="ico s"><use href="#i-search"/></svg>搜索主题、来源或我的记录<span class="kbd">⌘K</span></div>
+            <span class="chip ok"><i class="led"></i>在线 · Agent 可用</span>
+            <span class="avatar">G</span>
+          </header>
+          <div class="home">
+            <main class="home-main">
+              <p class="eyebrow">TECHNICAL WIKI / 五类目录</p>
+              <h1>从一类技术进入，再回到原始资料。</h1>
+              <p class="lede">五类是入口，不是互斥的文件夹：切削、截击都可以同时关联正手与反手。</p>
+              <div class="legend">
+                <span><i class="dot full"></i>已审阅 · 来源完整</span>
+                <span><i class="dot half"></i>已导入 · 来源信息待补</span>
+                <span><i class="dot empty"></i>待审阅</span>
+                <span><i class="dot gap"></i>缺来源</span>
+              </div>
+              <div class="toc">
+                <section class="cat">
+                  <header><span class="code">FH</span><span class="name">正手</span></header>
+                  <div class="dots"><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i><i class="dot half"></i></div>
+                  <p class="count">15 份 · 均为提炼稿<br>链接与时间码待补</p>
+                  <div class="svc"></div>
+                  <ul class="topics">
+                    <li><i class="dot half"></i>握拍与准备<small>3</small></li>
+                    <li><i class="dot half"></i>击球空间<small>2</small></li>
+                    <li><i class="dot half"></i>上旋与雨刷<small>2</small></li>
+                    <li><i class="dot half"></i>身体发力<small>4</small></li>
+                    <li><i class="dot half"></i>拍头下落与节奏<small>3</small></li>
+                    <li class="more">全部 8 个主题 ›</li>
+                  </ul>
+                </section>
+                <section class="cat">
+                  <header><span class="code">BH</span><span class="name">反手</span></header>
+                  <div class="dots"><i class="dot half"></i></div>
+                  <p class="count">1 份兼及反手<br>覆盖不足</p>
+                  <div class="svc"></div>
+                  <ul class="topics">
+                    <li><i class="dot half"></i>双反入门<small>1</small></li>
+                    <li class="ghost"><i class="dot gap"></i>单反与双反<small>缺</small></li>
+                    <li class="ghost"><i class="dot gap"></i>击球点与稳定<small>缺</small></li>
+                  </ul>
+                  <a class="add-src"><svg class="ico s"><use href="#i-plus"/></svg>登记来源</a>
+                </section>
+                <section class="cat">
+                  <header><span class="code">VO</span><span class="name">截击</span></header>
+                  <div class="dots"></div>
+                  <p class="count none">尚无资料<br>不由模型补写</p>
+                  <div class="svc"></div>
+                  <ul class="topics">
+                    <li class="ghost"><i class="dot gap"></i>网前准备<small>缺</small></li>
+                    <li class="ghost"><i class="dot gap"></i>正手截击<small>缺</small></li>
+                    <li class="ghost"><i class="dot gap"></i>反手截击<small>缺</small></li>
+                  </ul>
+                  <a class="add-src"><svg class="ico s"><use href="#i-plus"/></svg>登记第一份来源</a>
+                </section>
+                <section class="cat">
+                  <header><span class="code">SV</span><span class="name">发球</span></header>
+                  <div class="dots"></div>
+                  <p class="count none">尚无资料<br>不由模型补写</p>
+                  <div class="svc"></div>
+                  <ul class="topics">
+                    <li class="ghost"><i class="dot gap"></i>抛球<small>缺</small></li>
+                    <li class="ghost"><i class="dot gap"></i>节奏与协调<small>缺</small></li>
+                    <li class="ghost"><i class="dot gap"></i>一发与二发<small>缺</small></li>
+                  </ul>
+                  <a class="add-src"><svg class="ico s"><use href="#i-plus"/></svg>登记第一份来源</a>
+                </section>
+                <section class="cat pilot">
+                  <header><span class="code">SL</span><span class="name">切削</span></header>
+                  <span class="chip tagline" style="height:22px;padding:0 8px">试点</span>
+                  <div class="dots"><i class="dot full"></i><i class="dot full"></i><i class="dot empty"></i></div>
+                  <p class="count">3 份 · 2 已审阅<br>1 份待审阅</p>
+                  <div class="svc"></div>
+                  <ul class="topics">
+                    <li><i class="dot full"></i>切削概览<small>2</small></li>
+                    <li class="cur"><i class="dot full"></i>反手切削<small>继续</small></li>
+                    <li><i class="dot empty"></i>正手切削<small>待审</small></li>
+                    <li class="ghost"><i class="dot gap"></i>随球上网<small>缺</small></li>
+                  </ul>
+                  <p class="count" style="min-height:0;margin-top:8px;font-size:12px">也属于：反手 · 截击</p>
+                </section>
+              </div>
+              <div class="cross">
+                <b>跨类主题</b>
+                <span class="xchip">拍面控制 <small>SL · VO</small></span>
+                <span class="xchip">低球处理 <small>SL · BH</small></span>
+                <span class="xchip">节奏变化 <small>SL · SV</small></span>
+                <span>一个主题可以属于多类，来源只存一份。</span>
+              </div>
+              <div class="registry">
+                <div class="reg-h"><b>来源登记</b><span>缺失项写“未知”，不由模型补造</span><a>全部 18 份 ›</a></div>
+                <table>
+                  <colgroup><col style="width:48px"><col style="width:62px"><col><col style="width:104px"><col style="width:112px"><col style="width:92px"><col style="width:108px"></colgroup>
+                  <thead><tr><th>ID</th><th>类型</th><th>标题</th><th>作者 / 机构</th><th>定位</th><th>使用范围</th><th>状态</th></tr></thead>
+                  <tbody>
+                    <tr><td class="id">S1</td><td>视频</td><td>反手切削基础（示例来源）</td><td>示例频道</td><td>03:10–04:25</td><td>个人学习</td><td><i class="dot full"></i>已审阅</td></tr>
+                    <tr><td class="id">S3</td><td>视频</td><td>正手切削（示例来源）</td><td class="unk">未知</td><td>06:40–07:15</td><td class="unk">待确认</td><td><i class="dot empty"></i>待审阅</td></tr>
+                    <tr><td class="id">F07</td><td>提炼稿</td><td>Use your BODY (not your arm) for Forehand Power</td><td class="unk">未知</td><td class="unk">无时间码</td><td class="unk">待确认</td><td><i class="dot half"></i>来源待补</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </main>
+            <aside class="home-rail">
+              <div>
+                <div class="rail-h"><span>继续阅读</span></div>
+                <div class="card">
+                  <span class="eyebrow">SL · 切削 / 反手</span>
+                  <h4>反手切削：让球低而稳地过去</h4>
+                  <p>已发布 v3 · 2 份已审阅来源</p>
+                  <div style="display:flex;gap:6px;margin-top:10px"><span class="chip ok"><svg class="ico"><use href="#i-save"/></svg>已离线保存</span></div>
+                </div>
+              </div>
+              <div>
+                <div class="rail-h"><span>待你审阅</span><span>2</span></div>
+                <div class="list-row"><div>正手切削 · Agent 提案<small class="warnline">引用 1 份待审阅来源</small></div><svg class="ico s"><use href="#i-chev"/></svg></div>
+                <div class="list-row"><div>击球空间 · 结构调整<small>没有新增技术主张</small></div><svg class="ico s"><use href="#i-chev"/></svg></div>
+              </div>
+              <div>
+                <div class="rail-h"><span>资料缺口</span></div>
+                <div class="list-row"><div>截击 · 发球<small>0 份来源</small></div></div>
+                <div class="list-row"><div>反手 · 单反与双反<small>没有可引用的来源</small></div></div>
+                <p class="gap-note">缺口要靠登记来源补齐，模型回答会标“未经知识库核验”。</p>
+              </div>
+              <div>
+                <div class="rail-h"><span>我的训练 Wiki</span></div>
+                <div class="list-row"><div>低球切削飘高<small>v4 · 09-28 自动更新</small></div><span class="chip journal" style="height:22px">J8</span></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone p-side">
+        <div class="app">
+          <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars off"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+          <div class="offline-band"><svg class="ico s"><use href="#i-offline"/></svg>离线 · 只显示已保存的 6 页</div>
+          <div class="phead"><h3>技术 Wiki</h3><span class="icon-btn" style="width:44px;height:44px"><svg class="ico"><use href="#i-search"/></svg></span></div>
+          <div class="cont">
+            <div class="card">
+              <span class="eyebrow">继续阅读 · SL</span>
+              <h4 style="font-size:16px">反手切削：让球低而稳地过去</h4>
+              <p style="display:flex;align-items:center;gap:6px;color:var(--ot-ok);font-weight:600"><svg class="ico s"><use href="#i-save"/></svg>已离线保存 · v3</p>
+            </div>
+          </div>
+          <div class="plabel" style="margin:20px 20px 8px"><span>五类目录</span><span style="font-size:12px;color:var(--ot-ink-3)">离线可打开的已标出</span></div>
+          <div class="cat-rows">
+            <div class="cat-row"><span class="code">FH</span><div><b>正手</b><small>15 份 · 来源信息待补</small></div><span class="side saved">已存 2 页</span><svg class="ico s"><use href="#i-chev"/></svg></div>
+            <div class="cat-row na"><span class="code">BH</span><div><b>反手</b><small>1 份 · 覆盖不足</small></div><span class="side">未保存</span><span></span></div>
+            <div class="cat-row na"><span class="code">VO</span><div><b>截击</b><small>尚无资料</small></div><span class="side">—</span><span></span></div>
+            <div class="cat-row na"><span class="code">SV</span><div><b>发球</b><small>尚无资料</small></div><span class="side">—</span><span></span></div>
+            <div class="cat-row"><span class="code">SL</span><div><b>切削</b><small>3 份 · 2 已审阅 · 试点</small></div><span class="side saved">已存 4 页</span><svg class="ico s"><use href="#i-chev"/></svg></div>
+          </div>
+          <p class="phone-note">离线时不能导入、审阅或提问。2 项待审阅会留到联网后在电脑上处理。</p>
+          <nav class="tabbar">
+            <a class="on"><svg class="ico"><use href="#i-book"/></svg>知识</a>
+            <a><svg class="ico"><use href="#i-court"/></svg>训练</a>
+            <a><svg class="ico"><use href="#i-pen"/></svg>记录<span class="badge">1</span></a>
+            <a><svg class="ico"><use href="#i-note"/></svg>我的 Wiki</a>
+          </nav>
+        </div>
+      </div>
+
+      <footer class="sheet-footer">
+        <div class="flow"><span>选一类</span><span class="arr">→</span><span>选一个主题</span><span class="arr">→</span><span>回到来源</span></div>
+        <div class="sample-note"><strong>正手 15 份来自当前仓库：均为 AI 提炼稿，来源链接与时间码待补</strong><br>多来源主题需要新的“知识编译层”；切削试点、主题划分与数字为示意</div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ═════════════════════════ 02 · READER ═════════════════════════ -->
+  <div class="stage">
+    <section class="board" id="reader" aria-label="02 主题阅读与证据">
+      <header class="sheet-head">
+        <div class="sheet-eyebrow">OPEN TENNIS / COURT MARGIN · V2</div>
+        <h2>每句话，都能找到来处。</h2>
+        <p>主题阅读 · 36 字行长、行内来源标记、可展开的证据链；手机上，来源从底部抽屉打开</p>
+        <div class="sheet-index">02</div>
+        <div class="sheet-badge">READER / 深色为可选阅读模式</div>
+      </header>
+      <div class="device-label" style="left:72px">02 / WEB · 深色阅读 <span>导航、正文、证据三栏</span></div>
+      <div class="device-label" style="left:1457px">02 / PWA · 浅色 <span>来源抽屉在拇指区</span></div>
+
+      <div class="web-frame" data-theme="dark" style="border-color:#2a3833">
+        <div class="app">
+          <header class="topbar">
+            <span class="brand"><svg class="mark"><use href="#brand-ot"/></svg>open <em>tennis</em><span class="private">PRIVATE</span></span>
+            <nav class="tabs"><a class="on">知识</a><a>训练</a><a>记录</a><a>我的 Wiki</a></nav>
+            <div class="search"><svg class="ico s"><use href="#i-search"/></svg>搜索主题、来源或我的记录<span class="kbd">⌘K</span></div>
+            <span class="icon-btn" title="切换浅色"><svg class="ico"><use href="#i-sun"/></svg></span>
+            <span class="chip ok"><i class="led"></i>在线</span>
+            <span class="avatar">G</span>
+          </header>
+          <div class="reader">
+            <aside class="lrail">
+              <div class="rh">技术 WIKI</div>
+              <div class="nav-cat"><span class="code">FH</span>正手<small>15</small></div>
+              <div class="nav-cat"><span class="code">BH</span>反手<small>1</small></div>
+              <div class="nav-cat"><span class="code">VO</span>截击<small>0</small></div>
+              <div class="nav-cat"><span class="code">SV</span>发球<small>0</small></div>
+              <div class="nav-cat open"><span class="code">SL</span>切削<small>3</small></div>
+              <div class="nav-sub">
+                <a><i class="dot full"></i>切削概览</a>
+                <a class="on"><i class="dot full"></i>反手切削：低而稳</a>
+                <a><i class="dot empty"></i>正手切削 · 待审</a>
+                <a><i class="dot gap"></i>随球上网 · 缺来源</a>
+              </div>
+              <div class="rh" style="margin-top:14px">我的训练 WIKI</div>
+              <div class="nav-cat"><span class="code" style="font-style:normal"><svg class="ico s"><use href="#i-note"/></svg></span>低球切削飘高<small>v4</small></div>
+              <div class="foot"><b>原文不被覆盖</b>派生页都有引用和版本；回退也会留下历史。</div>
+            </aside>
+            <article class="reading">
+              <div class="col">
+                <div class="crumb">技术 Wiki <svg class="ico s"><use href="#i-chev"/></svg> 切削 SL <svg class="ico s"><use href="#i-chev"/></svg> 反手</div>
+                <div class="chips">
+                  <span class="chip ok">已发布 v3</span>
+                  <span class="chip"><i class="dot full" style="width:8px;height:8px"></i>2 份已审阅来源</span>
+                  <span class="chip pending">1 份待审阅 · 未引用</span>
+                </div>
+                <h1>反手切削：让球低而稳地过去</h1>
+                <div class="figure"><svg viewBox="0 0 600 120" role="img" aria-label="切削侧视示意，非测量"><use href="#slice-side"/></svg></div>
+                <h2>什么时候用</h2>
+                <p class="body17">来球低而快、来不及完整引拍时，切削可以帮你争取时间，把球稳定地送<span class="nb">回去<span class="mk s">S2</span>。</span>它也常用来改变节奏，或在随球上网时<span class="nb">使用<span class="mk s">S2</span>。</span></p>
+                <h2>先看拍面，再看旋转</h2>
+                <p class="body17"><span class="hl">拍头先略高于来球，再向前、向下送</span><span class="nb"><span class="hl">出</span><span class="mk sel">S1</span>；</span>拍面略微打开，击球点在身体侧<span class="nb">前方<span class="mk s">S1</span>。</span>随挥沿着目标方向延伸，而不是往<span class="nb">下砍<span class="mk s">S1</span>。</span></p>
+                <div class="pass-j">
+                  <div class="kind j"><svg class="ico"><use href="#i-user"/></svg>本人记录 <span class="mk j">J7</span><span style="font-weight:400;color:var(--ot-ink-3);margin-left:auto">09-24</span></div>
+                  <q style="margin-top:6px">低球切过去总是飘高，一着急就往下砍。</q>
+                </div>
+                <div class="pass-m">
+                  <div class="kind m"><svg class="ico"><use href="#i-spark"/></svg>模型补充 · 未经知识库核验</div>
+                  <div style="margin-top:6px">可以先在发球线附近慢速对切，只观察过网高度。这不是资料中的训练处方。</div>
+                </div>
+                <div class="acts"><span class="btn primary">据此预览训练卡<svg class="ico"><use href="#i-arrow"/></svg></span><span class="btn secondary"><svg class="ico s"><use href="#i-save"/></svg>离线保存</span><span class="btn ghost"><svg class="ico s"><use href="#i-ask"/></svg>就这页问 Agent</span></div>
+              </div>
+            </article>
+            <aside class="epanel">
+              <div class="etabs"><span class="on">来源 <small>4</small></span><span>问 Agent</span><span>版本 <small>v3</small></span></div>
+              <div class="elist">
+                <div class="loc sel">
+                  <div class="loc-h"><span class="mk sel" style="margin:0">S1</span><svg class="ico s"><use href="#i-play"/></svg>教学视频<span class="st ok"><i class="dot full" style="width:8px;height:8px"></i>已审阅</span></div>
+                  <h5>反手切削基础<small>示例来源</small></h5>
+                  <div class="where">03:10–04:25 · 字幕逐字稿</div>
+                  <div class="chain"><span class="node"><i></i>原始视频<svg class="ico s"><use href="#i-up"/></svg></span><span class="edge"></span><span class="node"><i></i>逐字稿</span><span class="edge"></span><span class="node on"><i></i>提炼稿 §2</span></div>
+                  <div class="excerpt">“……拍头先比来球高一点，然后往前、往下送出去……”</div>
+                  <div class="meta">快照 v2 · 09-20 导入 · 09-21 你已审阅</div>
+                  <div class="row2"><span class="btn secondary">打开原文片段</span><span class="btn secondary">原始链接<svg class="ico s"><use href="#i-up"/></svg></span></div>
+                </div>
+                <div class="loc">
+                  <div class="loc-h"><span class="mk s" style="margin:0">S2</span><svg class="ico s"><use href="#i-doc"/></svg>教学笔记<span class="st ok"><i class="dot full" style="width:8px;height:8px"></i>已审阅</span></div>
+                  <h5>切削的使用情境<small>§3 · 示例来源</small></h5>
+                  <div class="one">作者：未知（不由模型补造）</div>
+                </div>
+                <div class="loc pend">
+                  <div class="loc-h"><span class="mk p" style="margin:0">S3</span><svg class="ico s"><use href="#i-play"/></svg>教学视频<span class="st pd"><i class="dot empty" style="width:8px;height:8px"></i>待审阅</span></div>
+                  <h5>正手切削<small>示例来源</small></h5>
+                  <div class="one">未审阅，不用于正式回答</div>
+                </div>
+                <div class="loc jr">
+                  <div class="loc-h"><span class="mk j" style="margin:0">J7</span><svg class="ico s"><use href="#i-user"/></svg>本人记录<span class="st jr">09-24</span></div>
+                  <div class="one">主观观察，不作技术证据 · 原话未改写</div>
+                </div>
+              </div>
+              <div class="ask">
+                <div class="q">问资料，也问我的训练经历…<span class="send"><svg class="ico s"><use href="#i-send"/></svg></span></div>
+                <div class="perm"><span class="toggle"></span>使用我的记录（会发送给模型供应商）</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone p-side">
+        <div class="app">
+          <div class="behind">
+            <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+            <div class="ptop"><span class="back"><svg class="ico"><use href="#i-back"/></svg>切削</span><span class="chip ok">v3</span></div>
+            <div class="pbody">
+              <h3>反手切削：<br>让球低而稳地过去</h3>
+              <div class="figure"><svg viewBox="0 0 600 120" style="height:80px"><use href="#slice-side"/></svg></div>
+              <p class="body17" style="margin-top:12px"><span class="hl">拍头先略高于来球，再向前、向下送出</span><span class="mk sel">S1</span>；拍面略微打开……</p>
+            </div>
+          </div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <div class="loc-h"><span class="mk sel" style="margin:0">S1</span><svg class="ico s"><use href="#i-play"/></svg>教学视频<span class="st ok"><i class="dot full" style="width:8px;height:8px"></i>已审阅</span><span class="x"><svg class="ico s"><use href="#i-x"/></svg></span></div>
+            <h5>反手切削基础<small style="font-size:13px;color:var(--ot-ink-3);font-weight:400;margin-left:6px">示例来源</small></h5>
+            <div class="where" style="font:13px var(--ot-font-mono);color:var(--ot-ink-2)">03:10–04:25 · 字幕逐字稿</div>
+            <div class="chain"><span class="node"><i></i>原始视频</span><span class="edge"></span><span class="node"><i></i>逐字稿</span><span class="edge"></span><span class="node on"><i></i>提炼稿 §2</span></div>
+            <div class="excerpt">“……拍头先比来球高一点，然后往前、往下送出去……”</div>
+            <div style="font-size:12px;color:var(--ot-ink-3);margin-top:10px">快照 v2 · 09-20 导入 · 09-21 你已审阅</div>
+            <div class="row2"><span class="btn secondary">打开原文片段</span><span class="btn secondary">原始链接<svg class="ico s"><use href="#i-up"/></svg></span></div>
+            <div class="backref"><svg class="ico s"><use href="#i-link"/></svg>本页引用 2 处：「先看拍面」第 1、2 句</div>
+            <div class="pager"><a><svg class="ico"><use href="#i-back"/></svg>上一个</a><span>S1 · 1 / 4</span><a>下一个<svg class="ico"><use href="#i-chev"/></svg></a></div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="sheet-footer">
+        <div class="flow"><span>读一段</span><span class="arr">→</span><span>点 S1</span><span class="arr">→</span><span>看原文片段与证据链</span><span class="arr">→</span><span>缺哪一环就标哪一环</span></div>
+        <div class="sample-note"><strong>示例来源为占位，不对应真实教练或视频</strong><br>技术要点只作界面样例，非训练建议 · 证据链需补齐原始链接与时间码后才算完整</div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ═════════════════════════ 03 · REVIEW ═════════════════════════ -->
+  <div class="stage">
+    <section class="board" id="review" aria-label="03 版本差异与审阅">
+      <header class="sheet-head">
+        <div class="sheet-eyebrow">OPEN TENNIS / COURT MARGIN · V2</div>
+        <h2>改了什么，一眼看清。</h2>
+        <p>版本差异 · 技术 Wiki 的改动经你审阅才发布；个人 Wiki 自动更新，但每次变化都能对照、能回退</p>
+        <div class="sheet-index">03</div>
+        <div class="sheet-badge">REVIEW / 版本与审阅</div>
+      </header>
+      <div class="device-label" style="left:72px">03 / WEB <span>技术 Wiki · 审阅 Agent 提案</span></div>
+      <div class="device-label" style="left:1457px">03 / PWA <span>个人 Wiki · 自动更新后的变更</span></div>
+
+      <div class="web-frame">
+        <div class="app">
+          <header class="topbar">
+            <span class="brand"><svg class="mark"><use href="#brand-ot"/></svg>open <em>tennis</em><span class="private">PRIVATE</span></span>
+            <nav class="tabs"><a class="on">知识</a><a>训练</a><a>记录</a><a>我的 Wiki</a></nav>
+            <div class="search"><svg class="ico s"><use href="#i-search"/></svg>搜索主题、来源或我的记录<span class="kbd">⌘K</span></div>
+            <span class="chip warn">待审阅 2</span>
+            <span class="avatar">G</span>
+          </header>
+          <div class="review">
+            <aside class="vline">
+              <p class="eyebrow">VERSIONS</p>
+              <h4>反手切削：让球低而稳地过去</h4>
+              <div class="ver draft sel"><span class="pin"></span><div class="box"><b>v4</b><span class="st" style="color:var(--ot-pending)">草稿 · 待你审阅</span><p>Agent 提案 · 09-29 21:10<br>+1 段 · 改 1 处 · 删 1 处</p></div></div>
+              <div class="ver pub"><span class="pin"></span><div class="box"><b>v3</b><span class="st" style="color:var(--ot-ok)">已发布 · 当前</span><p>你审阅发布 · 09-21</p></div></div>
+              <div class="ver pub"><span class="pin"></span><div class="box"><b>v2</b><span class="st" style="color:var(--ot-ink-2)">已发布</span><p>补充 S2 · 09-20</p></div></div>
+              <div class="ver"><span class="pin"></span><div class="box"><b>v1</b><span class="st" style="color:var(--ot-ink-2)">导入草稿</span><p>由 S1 生成 · 09-12</p></div></div>
+              <div class="foot">回退会生成新版本，历史保留；原始资料快照不会被改写。</div>
+            </aside>
+            <main class="diff">
+              <p class="eyebrow">PROPOSAL / v3 → v4 · 技术 WIKI</p>
+              <h1>Agent 提案：补充随挥与正手切削</h1>
+              <div class="chips">
+                <span class="chip ok"><svg class="ico"><use href="#i-plus"/></svg>新增 1 段</span>
+                <span class="chip warn">修改 1 处</span>
+                <span class="chip danger">删除 1 处有来源的说法</span>
+                <span class="chip pending">新引用 S3 · 待审阅</span>
+              </div>
+              <div class="seg"><span class="on">只看变化</span><span>并排对照</span><span>全文</span></div>
+              <div class="folded"><svg class="ico s"><use href="#i-chevd"/></svg>未改动 2 段 · 开头、什么时候用</div>
+              <div class="dblock">
+                <header><span class="sig mod">~</span>修改 · 先看拍面，再看旋转</header>
+                <div class="txt">拍头先略高于来球，再向前、向下<span class="nb">送出<span class="mk s">S1</span>；</span>拍面略微打开，击球点在身体侧<span class="nb">前方<span class="mk s">S1</span>。</span>随挥沿着目标方向延伸，<del>而不是往<span class="nb">下砍<span class="mk s">S1</span></span></del><ins>收拍大约停在肩部</ins><span class="nb"><ins>高度<span class="mk p">S3</span></ins>。</span></div>
+                <div class="flag danger"><svg class="ico s"><use href="#i-alert"/></svg>删掉了一句有已审阅来源（S1）支持的说法，换成了待审阅来源 S3 的说法。</div>
+              </div>
+              <div class="conflict">
+                <div><h6><span class="mk s" style="margin:0">S1</span>已审阅 · 03:58</h6>强调随挥向目标延伸，“不要往下砍”。</div>
+                <div><h6><span class="mk p" style="margin:0">S3</span>待审阅 · 06:40</h6>描述收拍大约停在肩部高度。</div>
+                <div class="note">两种说法可以并存：保留 S1，并列写出 S3 并注明情境；不要合并成唯一答案。</div>
+              </div>
+              <div class="dblock">
+                <header><span class="sig add">+</span>新增段落 · 正手切削</header>
+                <div class="txt"><ins>正手切削同样从高到低送出，常在被动时用来</ins><span class="nb"><ins>过渡<span class="mk p">S3</span></ins>。</span></div>
+                <div class="flag warn"><svg class="ico s"><use href="#i-clock"/></svg>只引用了待审阅来源；审阅 S3 前不能发布。</div>
+              </div>
+            </main>
+            <aside class="checks">
+              <h4>发布前核对</h4>
+              <p class="sub">本人审阅 · Agent 只能提案，不能发布</p>
+              <div class="ck pass"><span class="b"><svg class="ico"><use href="#i-check"/></svg></span><div><b>新增主张都有可定位来源</b><small>S3 · 06:40–07:15</small></div></div>
+              <div class="ck wait"><span class="b"><svg class="ico"><use href="#i-clock"/></svg></span><div><b>引用的来源都已审阅</b><small>S3 尚未审阅</small></div></div>
+              <div class="ck fail"><span class="b"><svg class="ico"><use href="#i-x"/></svg></span><div><b>没有删掉有来源支持的说法</b><small>删除了 S1 的一句</small></div></div>
+              <div class="ck pass"><span class="b"><svg class="ico"><use href="#i-check"/></svg></span><div><b>适用情境写清楚了</b><small>被动来球 · 过渡</small></div></div>
+              <div class="acts">
+                <span class="btn primary full">先去审阅 S3<svg class="ico"><use href="#i-arrow"/></svg></span>
+                <span class="btn off full">发布 v4</span>
+                <p class="reason">还有 2 项未通过，暂不能发布</p>
+                <span class="btn secondary full">退回并说明原因</span>
+                <span class="btn ghost full">保持 v3</span>
+              </div>
+              <div class="runbox"><b>提案来源</b>Agent 运行 R-0929-2110 · 读取 S1 S2 S3<br>未读取个人记录 · 输入与结果可在运行日志中追溯</div>
+              <p class="foot" style="margin-top:auto;padding-top:12px">退回不会删除提案；发布后仍可回退到 v3。</p>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone p-side">
+        <div class="app">
+          <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+          <div class="ptop"><span class="back"><svg class="ico"><use href="#i-back"/></svg>低球切削飘高</span><span class="chip ok">v3 → v4</span></div>
+          <div class="pbody" style="padding-top:16px">
+            <p class="eyebrow">CHANGES / 自动更新 · 09-28</p>
+            <h3 style="margin-bottom:14px">这次改了两处，<br>原话一字未动。</h3>
+            <div class="chg">
+              <div class="h"><span class="sig add">+</span>新增 · 发生情境</div>
+              <p>来球低且快时，慢下来往前送，过网更低。</p>
+              <div class="src"><span class="mk j" style="margin:0">J8</span>整理自你的原话</div>
+            </div>
+            <div class="chg m">
+              <div class="h"><span class="sig mod">~</span>更新 · 下一次观察</div>
+              <p><del>先练挥拍发力</del> <ins>继续只看过网高度</ins></p>
+              <div class="src"><svg class="ico s"><use href="#i-spark"/></svg>模型补充 · 未经知识库核验</div>
+            </div>
+            <div class="chg" style="padding:10px 14px">
+              <div class="h" style="font-weight:500;color:var(--ot-ink-2)"><span class="sig same">=</span>未改 · 资料 S1 S2 · 原始记录 J7</div>
+            </div>
+            <div class="guard"><svg class="ico"><use href="#i-shield"/></svg>原始记录 J7、J8 未改动 · v3 已保留</div>
+          </div>
+          <div class="dock">
+            <div class="two"><span class="btn secondary">对照全文</span><span class="btn secondary"><svg class="ico s"><use href="#i-history"/></svg>回退到 v3</span></div>
+            <span class="btn primary big full">据此预览下一张训练卡</span>
+          </div>
+          <nav class="tabbar">
+            <a><svg class="ico"><use href="#i-book"/></svg>知识</a>
+            <a><svg class="ico"><use href="#i-court"/></svg>训练</a>
+            <a><svg class="ico"><use href="#i-pen"/></svg>记录</a>
+            <a class="on"><svg class="ico"><use href="#i-note"/></svg>我的 Wiki</a>
+          </nav>
+        </div>
+      </div>
+
+      <footer class="sheet-footer">
+        <div class="flow"><span>Agent 提案</span><span class="arr">→</span><span>你核对来源</span><span class="arr">→</span><span>发布或退回</span><span class="arr">→</span><span>随时可回退</span></div>
+        <div class="sample-note"><strong>技术 Wiki：只有你能发布 · 个人 Wiki：自动更新，可对照、可回退</strong><br>回退生成新版本，不删除历史 · 原始资料与原始记录不被覆盖</div>
+      </footer>
+    </section>
+  </div>
+
+  <!-- ═════════════════════════ 04 · MOBILE LOOP ═════════════════════════ -->
+  <div class="stage">
+    <section class="board" id="loop" aria-label="04 手机端切削链路">
+      <header class="sheet-head">
+        <div class="sheet-eyebrow">OPEN TENNIS / COURT MARGIN · V2</div>
+        <h2>读一页，练一次，记一句。</h2>
+        <p>切削纵向链路 · 每一步都写明：依据什么、存在哪里、有没有提交、Wiki 是否已更新</p>
+        <div class="sheet-index">04</div>
+        <div class="sheet-badge">MOBILE LOOP / 切削试点</div>
+      </header>
+      <div class="device-label lb1">01 / 采用前 <span>先看依据，再决定</span></div>
+      <div class="device-label lb2">02 / 练中 · 离线 <span>休息时勾一下</span></div>
+      <div class="device-label lb3">03 / 练后 · 本机草稿 <span>原话先存本机</span></div>
+      <div class="device-label lb4">04 / 提交后 <span>回执与个人 Wiki v4</span></div>
+
+      <!-- phone 1 -->
+      <div class="phone ph1">
+        <div class="app">
+          <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+          <div class="ptop"><span class="back"><svg class="ico"><use href="#i-back"/></svg>反手切削</span><span class="chip pending">预览 · 未采用</span></div>
+          <div class="pbody">
+            <p class="eyebrow">PREVIEW / 采用前先看依据</p>
+            <h3>低而稳，<br>先看过网高度。</h3>
+            <div class="plabel" style="margin-top:0">依据</div>
+            <div class="basis"><span class="chip ok"><span class="mk s" style="margin:0;height:18px">S1</span>03:10</span><span class="chip ok"><span class="mk s" style="margin:0;height:18px">S2</span>§3</span><span class="chip journal"><span class="mk j" style="margin:0;height:18px">J7</span>本人记录</span></div>
+            <div class="pass-m" style="margin-top:14px;padding:10px 14px 4px">
+              <div class="kind m"><svg class="ico"><use href="#i-spark"/></svg>练习编排 · 模型补充</div>
+              <div style="font-size:12px;color:var(--ot-model);margin:2px 0 4px">未经知识库核验 · 组数可改</div>
+              <ol class="drills">
+                <li><span class="n">01</span>发球线附近慢速对切<span class="d">2 × 10</span></li>
+                <li><span class="n">02</span>底线对切，只看过网高度<span class="d">3 × 8</span></li>
+                <li><span class="n">03</span>回合中用一次切削<span class="d">2 × 5</span></li>
+              </ol>
+            </div>
+            <p style="font-size:12px;color:var(--ot-ink-2);margin-top:10px;line-height:1.6">出现疼痛或不适时停止；这不是医疗或个体化训练处方。</p>
+          </div>
+          <div class="dock">
+            <div class="check on"><span class="box"><svg class="ico"><use href="#i-check"/></svg></span>我已看过依据与未核验内容</div>
+            <span class="btn primary big full" style="margin-top:6px">采用这张卡</span>
+          </div>
+          <nav class="tabbar">
+            <a><svg class="ico"><use href="#i-book"/></svg>知识</a>
+            <a class="on"><svg class="ico"><use href="#i-court"/></svg>训练</a>
+            <a><svg class="ico"><use href="#i-pen"/></svg>记录</a>
+            <a><svg class="ico"><use href="#i-note"/></svg>我的 Wiki</a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- phone 2 -->
+      <div class="phone ph2">
+        <div class="app">
+          <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars off"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+          <div class="ptop"><span class="back"><svg class="ico"><use href="#i-back"/></svg>今天的训练</span><span class="chip warn"><svg class="ico"><use href="#i-offline"/></svg>离线 · 已存本机</span></div>
+          <div class="pbody">
+            <p class="eyebrow">ON COURT / 切削 · 低而稳</p>
+            <h3>休息时，<br>勾一下就好。</h3>
+            <div class="plabel" style="margin-top:0"><span>完成 2 / 3 项</span><span style="font-size:12px;color:var(--ot-ink-3)">可撤销</span></div>
+            <div class="step done"><span class="c"><svg class="ico"><use href="#i-check"/></svg></span><div><b>发球线附近慢速对切</b><small>已完成 · 09:12</small></div></div>
+            <div class="step done"><span class="c"><svg class="ico"><use href="#i-check"/></svg></span><div><b>底线对切，只看过网高度</b><small>已完成 · 09:31</small></div></div>
+            <div class="step"><span class="c"></span><div><b>回合中用一次切削</b><small>未完成 · 可以跳过</small></div></div>
+            <p style="font-size:13px;color:var(--ot-ink-2);margin-top:6px;line-height:1.7">只记完成状态，不必每球输入。<br>勾选只保存在这台手机。</p>
+          </div>
+          <div class="dock">
+            <span class="btn primary big full">结束，留一句感受<svg class="ico"><use href="#i-arrow"/></svg></span>
+          </div>
+          <nav class="tabbar">
+            <a><svg class="ico"><use href="#i-book"/></svg>知识</a>
+            <a class="on"><svg class="ico"><use href="#i-court"/></svg>训练</a>
+            <a><svg class="ico"><use href="#i-pen"/></svg>记录</a>
+            <a><svg class="ico"><use href="#i-note"/></svg>我的 Wiki</a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- phone 3 -->
+      <div class="phone ph3">
+        <div class="app">
+          <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars off"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+          <div class="ptop"><span class="back"><svg class="ico"><use href="#i-back"/></svg>练后记录</span><span class="chip warn"><svg class="ico"><use href="#i-device"/></svg>本机草稿 · 未提交</span></div>
+          <div class="pbody">
+            <p class="eyebrow">AFTER / 原话先存本机</p>
+            <h3 style="margin-bottom:10px">记一个场景，<br>留一句原话。</h3>
+            <div class="plabel" style="margin-top:0">情境（可选）</div>
+            <div class="pick"><span class="on">低球</span><span>来球快</span><span>移动中</span><span>长回合</span></div>
+            <div class="plabel">我的原话</div>
+            <div class="textarea">低球还是会飘，但慢下来往前送的时候，过网低了一点。<span class="cnt">26 字 · 已存本机</span></div>
+            <div class="plabel">感受（可选，不是评分）</div>
+            <div class="pick"><span>还没感觉</span><span class="on">有点线索</span><span>更清楚了</span></div>
+            <ol class="stepper" style="margin-top:18px">
+              <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>本机</span></li>
+              <li class="now"><b></b><span>提交</span><small>需联网</small></li>
+              <li class="wait"><b></b><span>整理</span></li>
+              <li class="wait"><b></b><span>Wiki</span></li>
+            </ol>
+          </div>
+          <div class="dock">
+            <span class="btn primary big full"><svg class="ico"><use href="#i-save"/></svg>保存到本机</span>
+            <p class="hint">联网后由你确认提交，不会悄悄上传</p>
+          </div>
+          <nav class="tabbar">
+            <a><svg class="ico"><use href="#i-book"/></svg>知识</a>
+            <a><svg class="ico"><use href="#i-court"/></svg>训练</a>
+            <a class="on"><svg class="ico"><use href="#i-pen"/></svg>记录<span class="badge">1</span></a>
+            <a><svg class="ico"><use href="#i-note"/></svg>我的 Wiki</a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- phone 4 -->
+      <div class="phone ph4">
+        <div class="app">
+          <div class="statusbar"><span>9:41</span><span class="sig"><span class="bars"><i></i><i></i><i></i><i></i></span><span class="batt"></span></span></div>
+          <div class="ptop"><span class="back"><svg class="ico"><use href="#i-back"/></svg>我的训练 Wiki</span><span class="chip ok">v4 已更新</span></div>
+          <div class="pbody">
+            <ol class="stepper" style="margin-top:2px">
+              <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>本机</span></li>
+              <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>已提交</span><small>回执 J8</small></li>
+              <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>整理</span></li>
+              <li class="done"><b><svg class="ico"><use href="#i-check"/></svg></b><span>Wiki</span><small>v4</small></li>
+            </ol>
+            <p class="eyebrow" style="margin-top:18px">PERSONAL / 低球切削飘高</p>
+            <h3 style="margin-bottom:12px">多了一条线索：<br>慢下来，往前送。</h3>
+            <div class="pass-j" style="font-size:15px;line-height:1.7">
+              <div class="kind j" style="font-size:12px"><svg class="ico"><use href="#i-user"/></svg>本人记录 <span class="mk j">J8</span><span style="font-weight:400;color:var(--ot-ink-3);margin-left:auto">原话</span></div>
+              <q style="margin-top:4px">低球还是会飘，但慢下来往前送的时候，过网低了一点。</q>
+            </div>
+            <div class="chg" style="margin-top:12px;padding:10px 14px"><div class="h"><span class="sig add">+</span>新增情境 · 来球低且快</div></div>
+            <div class="chg m" style="padding:10px 14px"><div class="h"><span class="sig mod">~</span>下一次观察 · 模型补充</div></div>
+          </div>
+          <div class="dock">
+            <span class="btn primary big full">据此预览下一张训练卡</span>
+            <p class="hint">查看 v3 → v4 变更 · 可回退</p>
+          </div>
+          <nav class="tabbar">
+            <a><svg class="ico"><use href="#i-book"/></svg>知识</a>
+            <a><svg class="ico"><use href="#i-court"/></svg>训练</a>
+            <a><svg class="ico"><use href="#i-pen"/></svg>记录</a>
+            <a class="on"><svg class="ico"><use href="#i-note"/></svg>我的 Wiki</a>
+          </nav>
+        </div>
+      </div>
+
+      <footer class="sheet-footer">
+        <div class="flow"><span>切削目录</span><span class="arr">→</span><span>主题阅读</span><span class="arr">→</span><span>来源抽屉</span><span class="arr">→</span><span>采用训练卡</span><span class="arr">→</span><span>练中</span><span class="arr">→</span><span>练后记录</span><span class="arr">→</span><span>个人 Wiki v4</span></div>
+        <div class="sample-note"><strong>链路前三步见 01、02 板</strong><br>离线、锁定与回执行为已在代码中实现，仍需真机 PWA 验证</div>
+      </footer>
+    </section>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const only = params.get("export");
+    if (only) {
+      document.body.classList.add("export");
+      document.querySelectorAll(".stage").forEach((stage) => {
+        stage.style.display = stage.querySelector("#" + only) ? "block" : "none";
+      });
+    }
+    function fit() {
+      if (only) return;
+      const scale = Math.min(1, (window.innerWidth - 32) / 1920);
+      document.querySelectorAll(".stage").forEach((stage) => {
+        stage.style.width = `${1920 * scale}px`;
+        stage.style.height = `${1200 * scale}px`;
+        stage.firstElementChild.style.transform = `scale(${scale})`;
+      });
+    }
+    fit();
+    addEventListener("resize", fit);
+  </script>
+</body>
+</html>
