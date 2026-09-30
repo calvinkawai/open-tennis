@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { formatDate, linkTo, navigate } from "../lib/navigation";
 import { newDraft, type LocalDraft } from "../lib/offline";
 import type { Journal, WikiSummary } from "../lib/contracts";
+import { draftStatus, pipeline, runStatus } from "../lib/status";
 import type { ViewContext } from "./app-shell";
+import { PipelineStepper, StatusChip } from "./status";
 import { Failure, Loading, Notice, downloadJson, useAction, useLoad } from "./ui";
 
 export function DraftsView({ context }: { context: ViewContext }) {
@@ -19,7 +21,7 @@ export function DraftsView({ context }: { context: ViewContext }) {
     {state.loading ? <Loading /> : state.error ? <Failure message={state.error} retry={state.reload} /> : !state.data?.length ?
       <div className="empty-state"><h2>本机没有待提交的草稿</h2><p>可以先新建一句记录，或从训练卡勾选完成后进入这里。</p></div> :
       <div className="record-list">{state.data.map((draft) => <a href={linkTo("draft", draft.client_id)} className="record-card" key={draft.client_id}>
-        <span className="tag">{draft.state === "locked" ? "已尝试提交 · 等待回执" : "本机草稿 · 未提交"}</span>
+        <StatusChip status={draftStatus(draft.state)} />
         <h2>{draft.content ? draft.content.slice(0, 85) : "尚未填写感受"}</h2>
         <p>{draft.completed_drill_ids.length} 项完成记录 · {formatDate(draft.updated_at)}</p><span className="text-link">打开草稿 →</span>
       </a>)}</div>}
@@ -50,6 +52,8 @@ function DraftEditor({ original, topics, context }: { original: LocalDraft; topi
   const locked = draft.state === "locked";
   if (receipt) return <div className="workspace-pane narrow"><p className="eyebrow">ORIGINAL SAVED</p><h1>原话已保存，接下来整理线索。</h1>
     <Notice>服务端回执与本机回执都已保存。Wiki 更新是下一步任务，不等于记录保存。</Notice>
+    <PipelineStepper stages={pipeline({ dirty: false, locked: false, receipt: true, online: context.online,
+      run: receipt.run_id ? "unknown" : null })} />
     <p className="owner-quote">{receipt.content || "已保留练习完成记录。"}</p>
     {receipt.run_id && <a className="button" href={linkTo("run", receipt.run_id)}>查看 Agent 整理状态</a>}
     <div className="button-row"><a href="#/records" className="text-link">查看原始记录</a><a href="#/personal" className="text-link">我的训练 Wiki</a></div>
@@ -58,7 +62,8 @@ function DraftEditor({ original, topics, context }: { original: LocalDraft; topi
     if (dirty && !window.confirm("当前输入还没保存到本机。确定离开吗？")) event.preventDefault();
   }}>← 本机草稿</a>
     <p className="eyebrow">AFTER THE COURT</p><h1>记一个场景，留一句感受。</h1>
-    <span className={`tag ${dirty || locked ? "amber" : ""}`}>{dirty ? "当前输入尚未保存" : locked ? "提交内容已锁定，等待核对" : "已存本机，尚未提交"}</span>
+    <StatusChip status={draftStatus(draft.state, dirty)} />
+    <PipelineStepper stages={pipeline({ dirty, locked, receipt: false, online: context.online, run: null })} />
     {locked && <Notice warning>之前的提交可能已经到达服务器。保留相同编号与原始内容核对重试，避免重复记录。</Notice>}
     <form className="form-stack" onSubmit={(event) => { event.preventDefault(); void action.act(async () => { await save(); }, "原话已保存到本机草稿，尚未同步到电脑。"); }}>
       <label>关联 Wiki 主题<select disabled={locked || action.busy} value={draft.page_id ?? ""} onChange={(event) => change({ page_id: event.target.value || null })}>
@@ -138,7 +143,7 @@ export function RecordsView({ context }: { context: ViewContext }) {
   </section>;
 }
 
-const runStatus = { queued: "等待整理", running: "Agent 正在整理", succeeded: "整理任务已完成", failed: "整理失败，原始记录仍在", needs_input: "需要本人确认后再继续" };
+const runHeadings = { queued: "等待整理", running: "Agent 正在整理", succeeded: "整理任务已完成", failed: "整理失败，原始记录仍在", needs_input: "需要本人确认后再继续" };
 
 export function RunView({ id, context }: { id: string; context: ViewContext }) {
   const state = useLoad(useCallback(async () => {
@@ -155,7 +160,10 @@ export function RunView({ id, context }: { id: string; context: ViewContext }) {
   if (state.loading && !state.data) return <Loading />;
   if (state.error || !state.data) return <Failure message={state.error ?? "任务状态未知。"} retry={state.reload} />;
   const run = state.data;
-  return <section className="workspace-pane narrow"><p className="eyebrow">AGENT / RUN</p><h1>{runStatus[run.status]}</h1>
+  return <section className="workspace-pane narrow"><p className="eyebrow">AGENT / RUN</p><h1>{runHeadings[run.status]}</h1>
+    <StatusChip status={runStatus(run.status)} />
+    {run.entry_id && <PipelineStepper stages={pipeline({ dirty: false, locked: false, receipt: true, online: context.online,
+      run: run.status, updated: Boolean(run.result_version_id) })} />}
     <p className="revision-text">运行编号：{run.id}</p>
     <Notice warning={run.status === "failed" || run.status === "needs_input"}>{run.error_message ??
       (run.kind === "technical_wiki" ? "技术 Wiki 任务只提出改动，发布仍需你的审阅。" : "Agent 只更新派生 Wiki；原始记录与历史版本不会被覆盖。")}</Notice>

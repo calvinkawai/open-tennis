@@ -43,26 +43,45 @@ export function Citations({ citations }: { citations: Evidence[] }) {
   )}</div>;
 }
 
-const labels: Record<Section["kind"], string> = {
+const kindLabels: Record<Section["kind"], string> = {
   source_supported: "资料支持",
   personal_observation: "本人记录 · 主观观察",
   model_supplement: "模型补充 · 未经知识库核验",
 };
 
-export function SourcedContent({ sections, citations }: { sections: Section[]; citations: Evidence[] }) {
+function Markers({ ids, citations, labels, selectedId, onSelect }: {
+  ids: string[]; citations: Evidence[]; labels: Map<string, string>;
+  selectedId: string | null; onSelect: (id: string) => void;
+}) {
+  if (!ids.length) return null;
+  return <p className="markers">{ids.map((id) => {
+    const citation = citations.find((item) => item.id === id);
+    const label = labels.get(id);
+    if (!citation || !label) return <span key={id} className="status-chip warn">引用缺失，暂时无法核对原文</span>;
+    return <button key={id} type="button" className={`marker ${citation.kind}`} aria-pressed={selectedId === id}
+      aria-label={`来源 ${label}：${citation.title || "未命名来源"}`} onClick={() => onSelect(id)}>{label}</button>;
+  })}</p>;
+}
+
+export function SourcedContent({ sections, citations, labels, selectedId = null, onSelect }: {
+  sections: Section[]; citations: Evidence[];
+  labels?: Map<string, string>; selectedId?: string | null; onSelect?: (id: string) => void;
+}) {
   return <div className="sourced-content">
     {sections.map((section, index) => (
-      <section key={index} className={`evidence-section ${section.kind}`} aria-label={labels[section.kind]}>
-        <h3 className="evidence-label"><span className="evidence-dot" aria-hidden="true" />{labels[section.kind]}</h3>
+      <section key={index} className={`evidence-section ${section.kind}`} aria-label={kindLabels[section.kind]}>
+        <h3 className="evidence-label"><span className="evidence-dot" aria-hidden="true" />{kindLabels[section.kind]}</h3>
         <SafeMarkdown text={section.text} />
         {section.kind !== "model_supplement" && section.citation_ids.length === 0 &&
           <p className="notice warning">这段内容没有附带引用，不能据此确认来源支持。</p>}
-        {section.citation_ids.map((id) => {
-          const citation = citations.find((item) => item.id === id);
-          return citation
-            ? <EvidenceLink key={id} evidence={citation} />
-            : <p key={id} className="notice warning">引用缺失，暂时无法核对原文。</p>;
-        })}
+        {labels && onSelect
+          ? <Markers ids={section.citation_ids} citations={citations} labels={labels} selectedId={selectedId} onSelect={onSelect} />
+          : section.citation_ids.map((id) => {
+            const citation = citations.find((item) => item.id === id);
+            return citation
+              ? <EvidenceLink key={id} evidence={citation} />
+              : <p key={id} className="notice warning">引用缺失，暂时无法核对原文。</p>;
+          })}
       </section>
     ))}
   </div>;

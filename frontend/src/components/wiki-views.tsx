@@ -1,18 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Answer, Space, WikiDetail, WikiVersion } from "../lib/contracts";
+import { citationLabels } from "../lib/evidence";
 import { formatDate, linkTo, navigate, safeHref } from "../lib/navigation";
+import { pageStatuses } from "../lib/status";
 import type { ViewContext } from "./app-shell";
 import { Citations, SafeMarkdown, SourcedContent } from "./content";
+import { EvidencePanel } from "./evidence-panel";
+import { StatusChip } from "./status";
 import { Failure, Loading, Notice, useAction, useLoad } from "./ui";
+import { VersionDiff } from "./version-diff";
 
 function AgentPanel({ context, page }: { context: ViewContext; page: WikiDetail }) {
   const [query, setQuery] = useState("");
   const [personal, setPersonal] = useState(false);
   const [answer, setAnswer] = useState<Answer | null>(null);
   const action = useAction();
-  return <aside className="agent-panel">
+  return <div className="agent-panel">
     <div className="row"><h2>问资料，也问自己的经历。</h2><span className="agent-star" aria-hidden="true">✧</span></div>
     <p className="muted small-text">Agent 不修改原文。技术改动先审阅，个人 Wiki 的整理保留引用和版本。</p>
     <form onSubmit={(event) => {
@@ -35,7 +40,7 @@ function AgentPanel({ context, page }: { context: ViewContext; page: WikiDetail 
       <SourcedContent sections={answer.sections} citations={answer.citations} />
       <a className="text-link" href={linkTo("preview", page.id)}>结合这篇 Wiki 预览训练卡 →</a>
     </div>}
-  </aside>;
+  </div>;
 }
 
 function VersionReview({ page, context, onChanged }: {
@@ -59,7 +64,8 @@ function VersionReview({ page, context, onChanged }: {
       </button>)}</div>
       {current && <div className="version-detail">
         <p className="change-summary">{current.change_summary}</p>
-        {page.version_id !== current.id && <details><summary>对照当前已发布内容</summary><SafeMarkdown text={page.content} /></details>}
+        {page.version_id !== current.id && <VersionDiff before={page.content} after={current.content}
+          fromLabel={page.version ? `当前 v${page.version}` : "当前"} toLabel={`v${current.number}`} />}
         <details open><summary>此版本的内容和来源</summary>
           {current.sections.length ? <SourcedContent sections={current.sections} citations={current.citations} /> : <SafeMarkdown text={current.content} />}
           <Citations citations={current.citations} /></details>
@@ -97,16 +103,25 @@ export function WikiView({ id, context, onSpaceChange }: {
   }, [context.api, context.offline, context.online, id]));
   const action = useAction();
   const [review, setReview] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [tab, setTab] = useState<"sources" | "agent">("sources");
+  const labels = useMemo(() => state.data ? citationLabels(state.data.sections, state.data.citations)
+    : new Map<string, string>(), [state.data]);
   useEffect(() => {
     if (state.data) onSpaceChange?.(state.data.space);
   }, [state.data, onSpaceChange]);
   if (state.loading) return <Loading />;
   if (state.error || !state.data) return <Failure message={state.error ?? "未取得页面。"} retry={state.reload} />;
   const page = state.data;
+  const select = (evidenceId: string) => {
+    setSelected(evidenceId);
+    setTab("sources");
+  };
   return <div className="reader-workspace">
-    <article className="reading-pane">
+    <article className="reading-pane"><div className="reading-column">
       <a href={page.space === "personal" ? "#/personal" : "#/knowledge"} className="back-link">← {page.space === "personal" ? "我的训练 Wiki" : "技术 Wiki"}</a>
-      <p className="eyebrow">WIKI / VERSION {page.version}</p>
+      <p className="eyebrow">{page.space === "personal" ? "PERSONAL WIKI" : "TECHNICAL WIKI"}</p>
+      <div className="chip-row">{pageStatuses(page).map((status) => <StatusChip key={status.label} status={status} />)}</div>
       <h1>{page.title}</h1>
       <div className="page-meta"><span>{page.topic}</span><span>{page.citations.length} 个来源</span><span>{formatDate(page.updated_at)}</span></div>
       {!context.online && <Notice>本机保存的版本可能不是最新版本，原有证据标记已保留。</Notice>}
@@ -122,11 +137,24 @@ export function WikiView({ id, context, onSpaceChange }: {
         {context.online && <a className="text-link" href={`/api/v1/wiki/${encodeURIComponent(page.id)}/export`} download>导出 Markdown</a>}
       </div>
       {action.feedback}
-      {page.sections.length ? <SourcedContent sections={page.sections} citations={page.citations} /> : <SafeMarkdown text={page.content} />}
-      {page.citations.length > 0 && <details><summary>全部原始来源</summary><Citations citations={page.citations} /></details>}
+      {page.sections.length
+        ? <SourcedContent sections={page.sections} citations={page.citations} labels={labels} selectedId={selected} onSelect={select} />
+        : <SafeMarkdown text={page.content} />}
       {(review || page.status === "draft") && context.online && <VersionReview page={page} context={context} onChanged={state.reload} />}
-    </article>
-    <AgentPanel context={context} page={page} />
+    </div></article>
+    <aside className="reader-aside" aria-label="来源与提问">
+      <div className="panel-tabs" role="tablist" aria-label="来源与提问">
+        <button type="button" role="tab" aria-selected={tab === "sources"} onClick={() => setTab("sources")}>
+          来源 <small>{page.citations.length}</small></button>
+        <button type="button" role="tab" aria-selected={tab === "agent"} onClick={() => setTab("agent")}>问 Agent</button>
+      </div>
+      <div role="tabpanel" aria-label={tab === "sources" ? "来源" : "问 Agent"}>
+        {tab === "sources"
+          ? <EvidencePanel citations={page.citations} labels={labels} selectedId={selected} onSelect={select} onClose={() => setSelected(null)} />
+          : <AgentPanel context={context} page={page} />}
+      </div>
+    </aside>
+    {selected && <div className="sheet-scrim" aria-hidden="true" onClick={() => setSelected(null)} />}
   </div>;
 }
 

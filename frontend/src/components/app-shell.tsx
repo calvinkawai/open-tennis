@@ -5,7 +5,11 @@ import { ApiClient } from "../lib/api";
 import { OfflineClient } from "../lib/offline";
 import { formatDate, linkTo, navigate } from "../lib/navigation";
 import type { Space } from "../lib/contracts";
+import { connectionStatus, pageStatuses } from "../lib/status";
 import { Failure, Loading, Notice, useAction, useLoad } from "./ui";
+import { Icon, type IconName } from "./icons";
+import { StatusChip } from "./status";
+import { ThemeToggle } from "./theme-toggle";
 import { EvidenceView, WikiView } from "./wiki-views";
 import { PlansView, PlanView, PreviewView } from "./plan-views";
 import { DeviceView, DraftsView, DraftView, RecordsView, RunView } from "./journal-views";
@@ -13,6 +17,43 @@ import { DeviceView, DraftsView, DraftView, RecordsView, RunView } from "./journ
 const defaultApi = new ApiClient();
 
 export type ViewContext = { api: ApiClient; offline: OfflineClient; online: boolean };
+type Section = "knowledge" | "plans" | "records" | "personal";
+
+const navItems: { key: Section; href: string; label: string; icon: IconName }[] = [
+  { key: "knowledge", href: "#/knowledge", label: "知识", icon: "book" },
+  { key: "plans", href: "#/plans", label: "训练", icon: "court" },
+  { key: "records", href: "#/drafts", label: "记录", icon: "pen" },
+  { key: "personal", href: "#/personal", label: "我的 Wiki", icon: "note" },
+];
+
+function sectionOf(route: { kind: string; id: string }, wikiSpace: Space): Section | null {
+  if (["plans", "plan", "preview"].includes(route.kind)) return "plans";
+  if (["records", "drafts", "draft", "run"].includes(route.kind) ||
+    (route.kind === "evidence" && route.id.startsWith("journal:"))) return "records";
+  if (route.kind === "personal" || (route.kind === "wiki" && wikiSpace === "personal")) return "personal";
+  if (["knowledge", "wiki", "evidence"].includes(route.kind)) return "knowledge";
+  return null;
+}
+
+function DraftBadge({ count }: { count: number }) {
+  return count ? <span className="nav-badge" aria-hidden="true">{count}</span> : null;
+}
+
+function DraftNote({ count }: { count: number }) {
+  return count ? <span className="sr-only">，本机 {count} 条草稿未提交</span> : null;
+}
+
+function NavLinks({ section, drafts, icons }: { section: Section | null; drafts: number; icons: boolean }) {
+  return <>{navItems.map((item) => {
+    const count = item.key === "records" ? drafts : 0;
+    return <a key={item.key} href={item.href} aria-current={section === item.key ? "page" : undefined}>
+      {icons && <span className="nav-icon"><Icon name={item.icon} size={22} /><DraftBadge count={count} /></span>}
+      {item.label}
+      {!icons && <DraftBadge count={count} />}
+      <DraftNote count={count} />
+    </a>;
+  })}</>;
+}
 
 function Brand() {
   return <a href="#/knowledge" className="brand" aria-label="Open Tennis 知识首页">
@@ -45,11 +86,9 @@ export function LibraryView({ context, space }: { context: ViewContext; space: S
     {action.feedback}
     {state.loading ? <Loading /> : state.error ? <Failure message={state.error} retry={state.reload} /> : state.data?.pages.length ? (
       <div className="library-grid">{state.data.pages.map((page) => <a className="topic-card" href={linkTo("wiki", page.id)} key={page.id}>
-        <div className="row"><span className="topic-number">WIKI / {String(page.version).padStart(2, "0")}</span>
-          {page.has_draft && <span className="tag amber">有待审阅版本</span>}</div>
-        <div className="court-lines" aria-hidden="true"><i /><i /><i /></div>
+        <div className="chip-row">{pageStatuses(page).map((status) => <StatusChip key={status.label} status={status} />)}</div>
         <h2>{page.title}</h2><p>{page.topic}</p>
-        <footer><span>{space === "personal" ? `${page.record_count} 条原始记录` : page.version ? "已发布 · 有来源" : "草稿 · 未发布"}</span><span>↗</span></footer>
+        <footer><span>{space === "personal" ? `${page.record_count} 条原始记录` : "阅读与来源"}</span><Icon name="chevron" size={16} /></footer>
         <small>{formatDate(page.updated_at)}</small>
       </a>)}</div>
     ) : <div className="empty-state"><div className="empty-court" aria-hidden="true" /><h2>{space === "technical" ? "你的知识库还没有资料" : "你的训练 Wiki 还没有主题"}</h2>
@@ -62,8 +101,8 @@ export function LibraryView({ context, space }: { context: ViewContext; space: S
   </section>;
 }
 
-export function AppShell({ api = defaultApi }: { api?: ApiClient }) {
-  const offline = useMemo(() => new OfflineClient(api), [api]);
+export function AppShell({ api = defaultApi, offline: injected }: { api?: ApiClient; offline?: OfflineClient }) {
+  const offline = useMemo(() => injected ?? new OfflineClient(api), [api, injected]);
   const [online, setOnline] = useState(true);
   const [route, setRoute] = useState({ kind: "knowledge", id: "" });
   const [wikiSpace, setWikiSpace] = useState<Space>("technical");
@@ -115,28 +154,38 @@ export function AppShell({ api = defaultApi }: { api?: ApiClient }) {
       void offline.close().catch(() => console.warn("local_storage_close_failed"));
     };
   }, [offline]);
+  const [drafts, setDrafts] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    offline.listDrafts().then(
+      (items) => { if (!cancelled) setDrafts(items.length); },
+      () => { if (!cancelled) setDrafts(0); },
+    );
+    return () => { cancelled = true; };
+  }, [offline, route]);
   const statusLoader = useCallback(() => online ? api.status() : Promise.resolve(null), [api, online]);
   const status = useLoad(statusLoader);
   const context = { api, offline, online };
-  const isPersonal = ["personal", "records", "drafts", "draft", "run"].includes(route.kind) ||
-    (route.kind === "wiki" && wikiSpace === "personal") ||
-    (route.kind === "evidence" && route.id.startsWith("journal:"));
-  const section = ["plans", "plan", "preview"].includes(route.kind) ? "plans"
-    : isPersonal ? "personal" : "knowledge";
+  const section = sectionOf(route, wikiSpace);
   return <div className="app-shell">
     <a className="skip-link" href="#main-content">跳到正文</a>
-    <header className="app-header"><Brand /><span className="private-label">PRIVATE / 球场页边</span>
-      <nav aria-label="主导航"><a aria-current={section === "knowledge" ? "page" : undefined} href="#/knowledge">技术 Wiki</a>
-        <a aria-current={section === "plans" ? "page" : undefined} href="#/plans">训练卡</a>
-        <a aria-current={section === "personal" ? "page" : undefined} href="#/personal">我的 Wiki</a></nav>
-      <a href="#/device" className="device-link" aria-label="本机草稿与离线设置">{online ? "在线" : "离线"}<span className={`connection-dot ${online ? "" : "disconnected"}`} /></a>
+    <header className="app-header"><Brand /><span className="private-label">PRIVATE</span>
+      <nav aria-label="主导航"><NavLinks section={section} drafts={drafts} icons={false} /></nav>
+      <div className="header-status">
+        {status.data && status.data.pending_reviews > 0 && <span className="review-chip">
+          <StatusChip status={{ label: `待审阅 ${status.data.pending_reviews}`, tone: "warn", icon: "clock" }} /></span>}
+        <a href="#/device" className="device-link" aria-label="本机草稿与离线设置"><StatusChip status={connectionStatus(online)} /></a>
+        <ThemeToggle />
+      </div>
     </header>
     <div className="shell-body"><aside className="sidebar"><p className="eyebrow">WIKI SPACES</p>
-      <a className={section === "knowledge" ? "active" : ""} href="#/knowledge">技术 Wiki <span>↗</span></a>
-      <a className={section === "personal" ? "active" : ""} href="#/personal">我的训练 Wiki <span>↗</span></a>
+      <a className={section === "knowledge" ? "active" : ""} href="#/knowledge">技术 Wiki</a>
+      <a className={section === "personal" ? "active" : ""} href="#/personal">我的训练 Wiki</a>
       <p className="eyebrow">ON &amp; OFF COURT</p>
-      <a href="#/plans">带去球场的训练卡</a><a href="#/records">原始训练记录</a><a href="#/drafts">本机草稿</a>
-      <a href="#/device">离线保存与导出</a>
+      <a className={section === "plans" ? "active" : ""} href="#/plans">带去球场的训练卡</a>
+      <a className={route.kind === "records" ? "active" : ""} href="#/records">原始训练记录</a>
+      <a className={["drafts", "draft"].includes(route.kind) ? "active" : ""} href="#/drafts">本机草稿<DraftBadge count={drafts} /><DraftNote count={drafts} /></a>
+      <a className={route.kind === "device" ? "active" : ""} href="#/device">离线保存与导出</a>
       <div className="sidebar-bottom"><strong>资料、记录、推测，分开放。</strong><p>原文不被 Agent 覆盖。每次理解，都能找到来处。</p>
         {status.data && <span>{status.data.sources_count} 份技术资料 · {status.data.pending_reviews} 项待审阅</span>}</div>
     </aside>
@@ -161,8 +210,6 @@ export function AppShell({ api = defaultApi }: { api?: ApiClient }) {
         <LibraryView key={route.kind} context={context} space={route.kind === "personal" ? "personal" : "technical"} /> :
         <div className="workspace-pane"><Notice warning>没有找到这个工作区，请检查链接。</Notice><a href="#/knowledge">返回知识库</a></div>}
     </main></div>
-    <nav className="mobile-nav" aria-label="手机导航"><a href="#/knowledge" aria-current={section === "knowledge" ? "page" : undefined}><span aria-hidden="true">▤</span>知识</a>
-      <a href="#/plans" aria-current={section === "plans" ? "page" : undefined}><span aria-hidden="true">▥</span>训练</a>
-      <a href="#/personal" aria-current={section === "personal" ? "page" : undefined}><span aria-hidden="true">▧</span>我的 Wiki</a></nav>
+    <nav className="mobile-nav" aria-label="手机导航"><NavLinks section={section} drafts={drafts} icons /></nav>
   </div>;
 }
